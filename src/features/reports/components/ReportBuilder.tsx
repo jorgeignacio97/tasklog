@@ -46,7 +46,7 @@ export default function ReportBuilder() {
   }
 
   const handleGenerate = () => {
-    if (!unreportedTasks || unreportedTasks.length === 0) return
+    if (!unreportedTasks) return
 
     createReport.mutate(
       {
@@ -254,7 +254,7 @@ export default function ReportBuilder() {
       <PreviewArea />
 
       {/* Generate Report button */}
-      {showPreview && unreportedTasks && unreportedTasks.length > 0 && (
+      {showPreview && unreportedTasks !== undefined && (
         <div className="mt-6 flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-900 p-4">
           <div>
             <p className="text-sm text-zinc-300">
@@ -263,7 +263,9 @@ export default function ReportBuilder() {
               {formatDuration(totalHours)} total
             </p>
             <p className="text-xs text-zinc-500 mt-0.5">
-              A draft report will be created and tasks will be marked as reported.
+              {unreportedTasks.length === 0
+                ? 'No unreported tasks in this range. A blank report will be created.'
+                : 'A draft report will be created and tasks will be marked as reported.'}
             </p>
           </div>
           <Button onClick={handleGenerate} isLoading={createReport.isPending}>

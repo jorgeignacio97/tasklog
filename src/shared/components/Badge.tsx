@@ -1,7 +1,7 @@
-import type { TaskCategory, TaskStatus } from '../types'
+import type { TaskCategory, TaskStatus, ReportStatus } from '../types'
 import { cn } from '../utils/cn'
 
-type BadgeVariant = TaskCategory | TaskStatus
+type BadgeVariant = TaskCategory | TaskStatus | ReportStatus
 
 const badgeColors: Record<BadgeVariant, string> = {
   frontend: 'bg-blue-500/20 text-blue-300',
@@ -12,6 +12,8 @@ const badgeColors: Record<BadgeVariant, string> = {
   pending: 'bg-amber-500/20 text-amber-300',
   'in-progress': 'bg-blue-500/20 text-blue-300',
   completed: 'bg-emerald-500/20 text-emerald-300',
+  draft: 'bg-zinc-500/20 text-zinc-300',
+  sent: 'bg-emerald-500/20 text-emerald-300',
 }
 
 interface BadgeProps {

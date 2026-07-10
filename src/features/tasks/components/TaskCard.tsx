@@ -57,6 +57,11 @@ export default function TaskCard({ task, onStatusChange, onDelete }: TaskCardPro
                 {formatDuration(task.estimatedDuration)}
               </p>
             )}
+            {task.reportedInReportId && (
+              <span className="mt-1.5 inline-block rounded bg-indigo-500/20 px-1.5 py-0.5 text-xs text-indigo-300">
+                Included in report
+              </span>
+            )}
             {notePreview && (
               <p className="mt-1.5 truncate text-sm text-zinc-400">{notePreview}</p>
             )}
