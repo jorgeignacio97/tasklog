@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
@@ -10,24 +10,11 @@ import { Select } from '../../../shared/components/Select'
 import { Button } from '../../../shared/components/Button'
 import Card from '../../../shared/components/Card'
 import type { Note } from '../../../shared/types'
+import { categoryOptions, statusOptions } from '../../../shared/lib/labels'
 
 interface TaskFormProps {
   taskId?: string
 }
-
-const categoryOptions = [
-  { value: 'frontend', label: 'Frontend' },
-  { value: 'backend', label: 'Backend' },
-  { value: 'bug', label: 'Bug' },
-  { value: 'review', label: 'Review' },
-  { value: 'other', label: 'Other' },
-]
-
-const statusOptions = [
-  { value: 'pending', label: 'Pending' },
-  { value: 'in-progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-]
 
 const TITLE_MAX = 200
 
@@ -121,18 +108,13 @@ export default function TaskForm({ taskId }: TaskFormProps) {
     setNotes((prev) => prev.filter((n) => n.id !== noteId))
   }
 
-  const handleNoteFormSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    addNote()
-  }
-
   const isMutating = createMutation.isPending || updateMutation.isPending
 
   // ── Loading state for edit mode ─────────────────────────────────────
   if (isEditing && isLoadingTask) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-semibold text-zinc-100">Edit Task</h1>
+        <h1 className="text-xl font-semibold text-zinc-100">Editar tarea</h1>
         <div className="h-96 animate-pulse rounded-lg bg-zinc-900" />
       </div>
     )
@@ -142,9 +124,9 @@ export default function TaskForm({ taskId }: TaskFormProps) {
   if (isEditing && !isLoadingTask && !existingTask) {
     return (
       <div className="py-16 text-center">
-        <p className="text-lg text-zinc-400">Task not found</p>
+        <p className="text-lg text-zinc-400">Tarea no encontrada</p>
         <Button className="mt-4" onClick={() => navigate({ to: '/tasks' })}>
-          Back to tasks
+          Volver a tareas
         </Button>
       </div>
     )
@@ -153,14 +135,14 @@ export default function TaskForm({ taskId }: TaskFormProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-xl font-semibold text-zinc-100">
-        {isEditing ? 'Edit Task' : 'New Task'}
+        {isEditing ? 'Editar tarea' : 'Nueva tarea'}
       </h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* ── Title ─────────────────────────────────────────────────── */}
         <Input
-          label="Title"
-          placeholder="What needs to be done?"
+          label="Título"
+          placeholder="¿Qué hay que hacer?"
           error={errors.title?.message}
           maxLength={TITLE_MAX}
           {...register('title')}
@@ -172,20 +154,20 @@ export default function TaskForm({ taskId }: TaskFormProps) {
             htmlFor="description"
             className="block text-sm font-medium text-zinc-300"
           >
-            Description
+            Descripción
           </label>
           <textarea
             id="description"
             rows={3}
             className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Optional details…"
+            placeholder="Detalles opcionales…"
             {...register('description')}
           />
         </div>
 
         {/* ── Category ──────────────────────────────────────────────── */}
         <Select
-          label="Category"
+          label="Categoría"
           options={categoryOptions}
           error={errors.category?.message}
           {...register('category')}
@@ -194,7 +176,7 @@ export default function TaskForm({ taskId }: TaskFormProps) {
         {/* ── Status (only show in edit mode) ──────────────────────── */}
         {isEditing && (
           <Select
-            label="Status"
+            label="Estado"
             options={statusOptions}
             error={errors.status?.message}
             {...register('status')}
@@ -203,7 +185,7 @@ export default function TaskForm({ taskId }: TaskFormProps) {
 
         {/* ── Estimated duration ────────────────────────────────────── */}
         <Input
-          label="Estimated duration (hours)"
+          label="Duración estimada (horas)"
           type="number"
           step="0.5"
           min="0"
@@ -213,7 +195,7 @@ export default function TaskForm({ taskId }: TaskFormProps) {
         />
 
         {/* ── Notes section ─────────────────────────────────────────── */}
-        <Card header={<span className="text-sm font-medium text-zinc-200">Notes</span>}>
+        <Card header={<span className="text-sm font-medium text-zinc-200">Notas</span>}>
           {/* Existing notes */}
           {notes.length > 0 && (
             <ul className="mb-3 space-y-2">
@@ -227,7 +209,7 @@ export default function TaskForm({ taskId }: TaskFormProps) {
                     type="button"
                     onClick={() => deleteNote(note.id)}
                     className="mt-0.5 shrink-0 text-zinc-500 transition-colors hover:text-red-400"
-                    aria-label="Delete note"
+                    aria-label="Eliminar nota"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -236,21 +218,21 @@ export default function TaskForm({ taskId }: TaskFormProps) {
             </ul>
           )}
 
-          {/* Add note inline form */}
-          <form onSubmit={handleNoteFormSubmit} className="flex gap-2">
+          {/* Add note inline (not a nested <form> — forms cannot nest in HTML) */}
+          <div className="flex gap-2">
             <input
               type="text"
               value={newNoteText}
               onChange={(e) => setNewNoteText(e.target.value)}
               onKeyDown={handleNoteKeyDown}
-              placeholder="Add a note…"
+              placeholder="Agregar una nota…"
               className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <Button type="submit" size="sm" disabled={!newNoteText.trim()}>
+            <Button type="button" size="sm" onClick={addNote} disabled={!newNoteText.trim()}>
               <Plus size={14} />
-              Add
+              Agregar
             </Button>
-          </form>
+          </div>
         </Card>
 
         {/* ── Actions ───────────────────────────────────────────────── */}
@@ -261,10 +243,10 @@ export default function TaskForm({ taskId }: TaskFormProps) {
             onClick={() => navigate({ to: '/tasks' })}
             disabled={isMutating}
           >
-            Cancel
+            Cancelar
           </Button>
           <Button type="submit" isLoading={isMutating}>
-            {isEditing ? 'Update Task' : 'Create Task'}
+            {isEditing ? 'Actualizar tarea' : 'Crear tarea'}
           </Button>
         </div>
       </form>

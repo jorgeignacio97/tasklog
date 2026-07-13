@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { taskService } from '../services/task.service.impl'
+import { taskService } from '../../../lib/services'
 import type { Task, TaskCategory } from '../../../shared/types'
 import type { CreateTaskInput, UpdateTaskInput } from '../services/task.service'
 
@@ -27,10 +27,10 @@ export function useCreateTask() {
     mutationFn: (data: CreateTaskInput) => taskService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Task created')
+      toast.success('Tarea creada')
     },
     onError: () => {
-      toast.error('Failed to create task')
+      toast.error('No se pudo crear la tarea')
     },
   })
 }
@@ -43,10 +43,10 @@ export function useUpdateTask() {
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', id] })
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Task updated')
+      toast.success('Tarea actualizada')
     },
     onError: () => {
-      toast.error('Failed to update task')
+      toast.error('No se pudo actualizar la tarea')
     },
   })
 }
@@ -57,10 +57,10 @@ export function useDeleteTask() {
     mutationFn: (id: string) => taskService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Task deleted')
+      toast.success('Tarea eliminada')
     },
     onError: () => {
-      toast.error('Failed to delete task')
+      toast.error('No se pudo eliminar la tarea')
     },
   })
 }

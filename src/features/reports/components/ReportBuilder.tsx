@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Calendar, Eye, FileText, Clock, ListTree, Loader2 } from 'lucide-react'
 import Card from '../../../shared/components/Card'
@@ -23,7 +23,7 @@ export default function ReportBuilder() {
     showPreview ? endDate : undefined,
   )
 
-  const tasksByCategory = useMemo(() => {
+  const tasksByCategory = (() => {
     if (!unreportedTasks) return new Map<TaskCategory, Task[]>()
     const map = new Map<TaskCategory, Task[]>()
     for (const cat of categoryOrder) {
@@ -31,12 +31,9 @@ export default function ReportBuilder() {
       if (tasks.length > 0) map.set(cat, tasks)
     }
     return map
-  }, [unreportedTasks])
+  })()
 
-  const totalHours = useMemo(
-    () => unreportedTasks?.reduce((sum, t) => sum + t.estimatedDuration, 0) ?? 0,
-    [unreportedTasks],
-  )
+  const totalHours = unreportedTasks?.reduce((sum, t) => sum + t.estimatedDuration, 0) ?? 0
 
   const categoryCount = tasksByCategory.size
 
@@ -78,7 +75,7 @@ export default function ReportBuilder() {
               <p className="text-2xl font-bold text-zinc-100">
                 {isLoadingPreview ? '…' : unreportedTasks?.length ?? 0}
               </p>
-              <p className="text-xs text-zinc-400">Total Tasks</p>
+              <p className="text-xs text-zinc-400">Total tareas</p>
             </div>
           </div>
         </Card>
@@ -89,7 +86,7 @@ export default function ReportBuilder() {
               <p className="text-2xl font-bold text-zinc-100">
                 {isLoadingPreview ? '…' : formatDuration(totalHours)}
               </p>
-              <p className="text-xs text-zinc-400">Total Hours</p>
+              <p className="text-xs text-zinc-400">Total horas</p>
             </div>
           </div>
         </Card>
@@ -100,7 +97,7 @@ export default function ReportBuilder() {
               <p className="text-2xl font-bold text-zinc-100">
                 {isLoadingPreview ? '…' : categoryCount}
               </p>
-              <p className="text-xs text-zinc-400">Categories</p>
+              <p className="text-xs text-zinc-400">Categorías</p>
             </div>
           </div>
         </Card>
@@ -114,7 +111,7 @@ export default function ReportBuilder() {
       return (
         <div className="text-center py-16 text-zinc-500">
           <Eye size={40} className="mx-auto mb-3 opacity-50" />
-          <p>Select a date range and click Preview to see unreported tasks.</p>
+          <p>Selecciona un rango de fechas y haz clic en Vista previa para ver las tareas no reportadas.</p>
         </div>
       )
     }
@@ -123,7 +120,7 @@ export default function ReportBuilder() {
       return (
         <div className="flex items-center justify-center py-16 text-zinc-400">
           <Loader2 size={24} className="animate-spin mr-2" />
-          Loading tasks…
+          Cargando tareas…
         </div>
       )
     }
@@ -132,10 +129,10 @@ export default function ReportBuilder() {
       return (
         <div className="text-center py-16 text-zinc-500">
           <Calendar size={40} className="mx-auto mb-3 opacity-50" />
-          <p>No unreported tasks in this range.</p>
+          <p>No hay tareas sin reportar en este rango.</p>
           <p className="text-sm mt-1">
-            All tasks created between {formatDate(startDate)} and{' '}
-            {formatDate(endDate)} are already reported.
+            Todas las tareas creadas entre {formatDate(startDate)} y{' '}
+            {formatDate(endDate)} ya fueron reportadas.
           </p>
         </div>
       )
@@ -148,7 +145,7 @@ export default function ReportBuilder() {
             <div className="flex items-center gap-2 mb-3">
               <Badge variant={category} />
               <span className="text-sm text-zinc-400">
-                {tasks.length} task{tasks.length !== 1 ? 's' : ''}
+                {tasks.length} tarea{tasks.length !== 1 ? 's' : ''}
                 {' · '}
                 {formatDuration(
                   tasks.reduce((s, t) => s + t.estimatedDuration, 0),
@@ -195,7 +192,7 @@ export default function ReportBuilder() {
   // ── Main render ──────────────────────────────────────────
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <h1 className="text-xl font-semibold text-zinc-100 mb-6">Report Builder</h1>
+      <h1 className="text-xl font-semibold text-zinc-100 mb-6">Generar reporte</h1>
 
       {/* Date range inputs */}
       <Card className="mb-6">
@@ -205,7 +202,7 @@ export default function ReportBuilder() {
               htmlFor="startDate"
               className="block text-sm font-medium text-zinc-300 mb-1"
             >
-              Start Date
+              Fecha inicio
             </label>
             <input
               id="startDate"
@@ -223,7 +220,7 @@ export default function ReportBuilder() {
               htmlFor="endDate"
               className="block text-sm font-medium text-zinc-300 mb-1"
             >
-              End Date
+              Fecha fin
             </label>
             <input
               id="endDate"
@@ -242,7 +239,7 @@ export default function ReportBuilder() {
             disabled={!startDate || !endDate}
           >
             <Eye size={16} />
-            Preview
+            Vista previa
           </Button>
         </div>
       </Card>
@@ -259,18 +256,18 @@ export default function ReportBuilder() {
           <div>
             <p className="text-sm text-zinc-300">
               <span className="font-semibold">{unreportedTasks.length}</span>{' '}
-              unreported task{unreportedTasks.length !== 1 ? 's' : ''} ·{' '}
+              tarea{unreportedTasks.length !== 1 ? 's' : ''} sin reportar ·{' '}
               {formatDuration(totalHours)} total
             </p>
             <p className="text-xs text-zinc-500 mt-0.5">
               {unreportedTasks.length === 0
-                ? 'No unreported tasks in this range. A blank report will be created.'
-                : 'A draft report will be created and tasks will be marked as reported.'}
+                ? 'No hay tareas sin reportar en este rango. Se creará un reporte vacío.'
+                : 'Se creará un reporte borrador y las tareas se marcarán como reportadas.'}
             </p>
           </div>
           <Button onClick={handleGenerate} isLoading={createReport.isPending}>
             <FileText size={16} />
-            Generate Report
+            Generar reporte
           </Button>
         </div>
       )}

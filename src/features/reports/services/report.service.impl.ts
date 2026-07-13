@@ -81,5 +81,3 @@ export class ReportServiceImpl implements ReportService {
     }));
   }
 }
-
-export const reportService = new ReportServiceImpl();

@@ -1,5 +1,6 @@
 import type { TaskCategory, TaskStatus, ReportStatus } from '../types'
 import { cn } from '../utils/cn'
+import { badgeLabels } from '../lib/labels'
 
 type BadgeVariant = TaskCategory | TaskStatus | ReportStatus
 
@@ -30,7 +31,7 @@ export default function Badge({ variant, className }: BadgeProps) {
         className,
       )}
     >
-      {variant}
+      {badgeLabels[variant]}
     </span>
   )
 }

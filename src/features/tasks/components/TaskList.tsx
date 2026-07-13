@@ -8,31 +8,21 @@ import {
   type SortingState,
   type ColumnDef,
 } from '@tanstack/react-table'
-import { Plus, Pencil, Trash2, ArrowUpDown } from 'lucide-react'
+import { Plus, ArrowUpDown } from 'lucide-react'
 import { useTasks, useUpdateTask, useDeleteTask } from '../hooks/useTasks'
 import { Button } from '../../../shared/components/Button'
 import { Input } from '../../../shared/components/Input'
 import { Select } from '../../../shared/components/Select'
 import Badge from '../../../shared/components/Badge'
 import Modal from '../../../shared/components/Modal'
+import { TaskRowActions } from './TaskRowActions'
+import { TaskStatusCell } from './TaskStatusCell'
 import { formatDate, formatDuration } from '../../../shared/utils/cn'
 import type { Task, TaskCategory, TaskStatus } from '../../../shared/types'
-
-const categoryOptions = [
-  { value: '', label: 'All categories' },
-  { value: 'frontend', label: 'Frontend' },
-  { value: 'backend', label: 'Backend' },
-  { value: 'bug', label: 'Bug' },
-  { value: 'review', label: 'Review' },
-  { value: 'other', label: 'Other' },
-]
-
-const statusOptions = [
-  { value: '', label: 'All statuses' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'in-progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-]
+import {
+  categoryFilterOptions,
+  statusFilterOptions,
+} from '../../../shared/lib/labels'
 
 const nextStatus: Record<TaskStatus, TaskStatus> = {
   pending: 'in-progress',
@@ -40,75 +30,11 @@ const nextStatus: Record<TaskStatus, TaskStatus> = {
   completed: 'completed',
 }
 
-// ── Row Actions (needs its own modal state per row) ──────────────────────
-
-function RowActions({ task }: { task: Task }) {
-  const [showDelete, setShowDelete] = useState(false)
-  const deleteMutation = useDeleteTask()
-
-  return (
-    <>
-      <div className="flex items-center gap-1">
-        <Link to="/tasks/$taskId" params={{ taskId: task.id }}>
-          <Button variant="ghost" size="sm" aria-label="Edit task">
-            <Pencil size={14} />
-          </Button>
-        </Link>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowDelete(true)}
-          aria-label="Delete task"
-        >
-          <Trash2 size={14} className="text-red-400" />
-        </Button>
-      </div>
-      <Modal
-        isOpen={showDelete}
-        onClose={() => setShowDelete(false)}
-        title="Delete task"
-      >
-        <p className="mb-4 text-sm text-zinc-300">
-          Are you sure you want to delete &ldquo;{task.title}&rdquo;? This action cannot be
-          undone.
-        </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setShowDelete(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => {
-              deleteMutation.mutate(task.id)
-              setShowDelete(false)
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </Modal>
-    </>
-  )
-}
-
-// ── Status cell with inline toggle ──────────────────────────────────────
-
-function StatusCell({ task }: { task: Task }) {
-  const updateMutation = useUpdateTask()
-
-  return (
-    <button
-      type="button"
-      onClick={() =>
-        updateMutation.mutate({ id: task.id, data: { status: nextStatus[task.status] } })
-      }
-      className="cursor-pointer transition-opacity hover:opacity-80"
-      title={`Current: ${task.status}. Click to cycle.`}
-    >
-      <Badge variant={task.status} />
-    </button>
-  )
+declare module '@tanstack/react-table' {
+  interface TableMeta<TData> {
+    onToggleStatus: (task: Task) => void
+    onDeleteClick: (task: Task) => void
+  }
 }
 
 // ── Columns definition ──────────────────────────────────────────────────
@@ -122,7 +48,7 @@ const columns: ColumnDef<Task>[] = [
         className="flex items-center gap-1 font-medium text-zinc-300 hover:text-zinc-100"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Title
+        Título
         <ArrowUpDown size={14} />
       </button>
     ),
@@ -144,7 +70,7 @@ const columns: ColumnDef<Task>[] = [
         className="flex items-center gap-1 font-medium text-zinc-300 hover:text-zinc-100"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Category
+        Categoría
         <ArrowUpDown size={14} />
       </button>
     ),
@@ -158,11 +84,16 @@ const columns: ColumnDef<Task>[] = [
         className="flex items-center gap-1 font-medium text-zinc-300 hover:text-zinc-100"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Status
+        Estado
         <ArrowUpDown size={14} />
       </button>
     ),
-    cell: (info) => <StatusCell task={info.row.original} />,
+    cell: (info) => (
+      <TaskStatusCell
+        task={info.row.original}
+        onToggle={info.table.options.meta!.onToggleStatus}
+      />
+    ),
   },
   {
     accessorKey: 'estimatedDuration',
@@ -172,7 +103,7 @@ const columns: ColumnDef<Task>[] = [
         className="flex items-center gap-1 font-medium text-zinc-300 hover:text-zinc-100"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Duration
+        Duración
         <ArrowUpDown size={14} />
       </button>
     ),
@@ -190,7 +121,7 @@ const columns: ColumnDef<Task>[] = [
         className="flex items-center gap-1 font-medium text-zinc-300 hover:text-zinc-100"
         onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
       >
-        Created
+        Creada
         <ArrowUpDown size={14} />
       </button>
     ),
@@ -203,7 +134,12 @@ const columns: ColumnDef<Task>[] = [
   {
     id: 'actions',
     header: '',
-    cell: (info) => <RowActions task={info.row.original} />,
+    cell: (info) => (
+      <TaskRowActions
+        task={info.row.original}
+        onDeleteClick={info.table.options.meta!.onDeleteClick}
+      />
+    ),
   },
 ]
 
@@ -225,37 +161,59 @@ function SkeletonRow() {
 
 export default function TaskList() {
   const { data: tasks = [], isLoading } = useTasks()
+  const updateMutation = useUpdateTask()
+  const deleteMutation = useDeleteTask()
   const [sorting, setSorting] = useState<SortingState>([])
   const [categoryFilter, setCategoryFilter] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [searchText, setSearchText] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
 
-  const filteredTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      if (categoryFilter && task.category !== categoryFilter) return false
-      if (statusFilter && task.status !== statusFilter) return false
-      if (searchText) {
-        const q = searchText.toLowerCase()
-        return (
-          task.title.toLowerCase().includes(q) ||
-          (task.description?.toLowerCase().includes(q) ?? false)
-        )
-      }
-      return true
-    })
-  }, [tasks, categoryFilter, statusFilter, searchText])
+  const filteredTasks = useMemo(
+    () =>
+      tasks.filter((task) => {
+        if (categoryFilter && task.category !== categoryFilter) return false
+        if (statusFilter && task.status !== statusFilter) return false
+        if (searchText) {
+          const q = searchText.toLowerCase()
+          return (
+            task.title.toLowerCase().includes(q) ||
+            (task.description?.toLowerCase().includes(q) ?? false)
+          )
+        }
+        return true
+      }),
+    [tasks, categoryFilter, statusFilter, searchText],
+  )
 
   const table = useReactTable({
     data: filteredTasks,
     columns,
     state: { sorting },
     onSortingChange: setSorting,
+    getRowId: (task) => task.id,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    meta: {
+      onToggleStatus: (task: Task) =>
+        updateMutation.mutate({
+          id: task.id,
+          data: { status: nextStatus[task.status] },
+        }),
+      onDeleteClick: (task: Task) => setDeleteTarget(task),
+    },
   })
 
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return
+    deleteMutation.mutate(deleteTarget.id, {
+      onSuccess: () => setDeleteTarget(null),
+    })
+  }
+
   const showEmptyState = !isLoading && tasks.length === 0
-  const showNoResults = !isLoading && tasks.length > 0 && filteredTasks.length === 0
+  const showNoResults =
+    !isLoading && tasks.length > 0 && filteredTasks.length === 0
 
   return (
     <div className="space-y-4">
@@ -263,26 +221,24 @@ export default function TaskList() {
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-40">
           <Select
-            label="Category"
-            options={categoryOptions.slice(1)}
-            placeholder="All categories"
+            label="Categoría"
+            options={categoryFilterOptions}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           />
         </div>
         <div className="w-40">
           <Select
-            label="Status"
-            options={statusOptions.slice(1)}
-            placeholder="All statuses"
+            label="Estado"
+            options={statusFilterOptions}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           />
         </div>
         <div className="w-56">
           <Input
-            label="Search"
-            placeholder="Search by title…"
+            label="Buscar"
+            placeholder="Buscar por título…"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
@@ -290,7 +246,7 @@ export default function TaskList() {
         <Link to="/tasks/new">
           <Button>
             <Plus size={16} />
-            New Task
+            Nueva tarea
           </Button>
         </Link>
       </div>
@@ -302,7 +258,12 @@ export default function TaskList() {
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900">
                 {columns.map((col) => (
-                  <th key={col.id ?? (col as { accessorKey?: string }).accessorKey} className="px-4 py-3">
+                  <th
+                    key={
+                      col.id ?? (col as { accessorKey?: string }).accessorKey
+                    }
+                    className="px-4 py-3"
+                  >
                     <div className="h-4 w-20 animate-pulse rounded bg-zinc-800" />
                   </th>
                 ))}
@@ -320,11 +281,11 @@ export default function TaskList() {
       {/* ── Empty state ─────────────────────────────────────────────── */}
       {showEmptyState && (
         <div className="flex flex-col items-center gap-4 py-16">
-          <p className="text-lg text-zinc-400">No tasks yet</p>
+          <p className="text-lg text-zinc-400">Todavía no hay tareas</p>
           <Link to="/tasks/new">
             <Button>
               <Plus size={16} />
-              Create your first task
+              Crear tu primera tarea
             </Button>
           </Link>
         </div>
@@ -333,7 +294,9 @@ export default function TaskList() {
       {/* ── No results state ────────────────────────────────────────── */}
       {showNoResults && (
         <div className="py-16 text-center">
-          <p className="text-lg text-zinc-400">No tasks match your filters</p>
+          <p className="text-lg text-zinc-400">
+            No hay tareas que coincidan con los filtros
+          </p>
           <button
             type="button"
             onClick={() => {
@@ -343,7 +306,7 @@ export default function TaskList() {
             }}
             className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
           >
-            Clear filters
+            Limpiar filtros
           </button>
         </div>
       )}
@@ -354,12 +317,18 @@ export default function TaskList() {
           <table className="w-full text-left text-sm">
             <thead>
               {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id} className="border-b border-zinc-800 bg-zinc-900">
+                <tr
+                  key={headerGroup.id}
+                  className="border-b border-zinc-800 bg-zinc-900"
+                >
                   {headerGroup.headers.map((header) => (
                     <th key={header.id} className="px-4 py-3">
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </th>
                   ))}
                 </tr>
@@ -367,10 +336,16 @@ export default function TaskList() {
             </thead>
             <tbody>
               {table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30">
+                <tr
+                  key={row.id}
+                  className="border-b border-zinc-800/50 transition-colors hover:bg-zinc-800/30"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-3">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -379,6 +354,35 @@ export default function TaskList() {
           </table>
         </div>
       )}
+
+      {/* ── Delete confirmation modal (single, shared across all rows) ──── */}
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Eliminar tarea"
+      >
+        <p className="mb-4 text-sm text-zinc-300">
+          ¿Estás seguro de que deseas eliminar &ldquo;{deleteTarget?.title}
+          &rdquo;? Esta acción no se puede deshacer.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setDeleteTarget(null)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={handleDeleteConfirm}
+            isLoading={deleteMutation.isPending}
+          >
+            Eliminar
+          </Button>
+        </div>
+      </Modal>
     </div>
   )
 }

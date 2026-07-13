@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { taskService } from '../../tasks/services/task.service.impl'
+import { taskService } from '../../../lib/services'
 
 const REMINDER_INACTIVE_KEY = 'tasklog_reminder_inactive'
 const REMINDER_UNREPORTED_KEY = 'tasklog_reminder_unreported'
@@ -57,8 +57,8 @@ export function useReminder() {
         const latest = sorted[0]
 
         if (daysAgo(latest.createdAt) >= 3) {
-          new Notification('TaskLog — Inactive', {
-            body: `It's been ${daysAgo(latest.createdAt)} days since your last task. Time to log something new!`,
+          new Notification('TaskLog — Inactividad', {
+            body: `Hace ${daysAgo(latest.createdAt)} días que no registras tareas. ¡Registra algo nuevo!`,
           })
           markShown(REMINDER_INACTIVE_KEY)
         }
@@ -74,8 +74,8 @@ export function useReminder() {
       taskService.getUnreportedInRange(monthStart, monthEnd).then((tasks) => {
         if (tasks.length === 0) return
 
-        new Notification('TaskLog — Unreported Tasks', {
-          body: `You have ${tasks.length} unreported task${tasks.length > 1 ? 's' : ''} near month-end. Create your report!`,
+        new Notification('TaskLog — Tareas sin reportar', {
+          body: `Tienes ${tasks.length} tarea${tasks.length > 1 ? 's' : ''} sin reportar cerca de fin de mes. ¡Crea tu reporte!`,
         })
         markShown(REMINDER_UNREPORTED_KEY)
       })

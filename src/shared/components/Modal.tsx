@@ -1,5 +1,4 @@
-import { type ReactNode, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { type ReactNode, useRef, useEffect } from 'react'
 import { X } from 'lucide-react'
 
 interface ModalProps {
@@ -10,31 +9,29 @@ interface ModalProps {
 }
 
 export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    },
-    [onClose],
-  )
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown)
-      return () => document.removeEventListener('keydown', handleKeyDown)
+    const d = dialogRef.current
+    if (!d) return
+
+    if (isOpen && !d.open) {
+      d.showModal()
+    } else if (!isOpen && d.open) {
+      d.close()
     }
-  }, [isOpen, handleKeyDown])
+  }, [isOpen])
 
-  if (!isOpen) return null
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
+  return (
+    <dialog
+      ref={dialogRef}
+      onCancel={() => onClose()}
+      onClick={(e) => {
+        if (e.target === dialogRef.current) onClose()
+      }}
+      className="border-0 bg-transparent p-0 max-w-none max-h-none m-auto backdrop:bg-black/50"
     >
-      <div
-        className="w-full max-w-lg rounded-lg bg-zinc-900 p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="w-full max-w-lg rounded-lg bg-zinc-900 p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-zinc-100">{title}</h2>
           <button
@@ -46,7 +43,6 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         </div>
         {children}
       </div>
-    </div>,
-    document.body,
+    </dialog>
   )
 }

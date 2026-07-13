@@ -12,13 +12,13 @@ export default function AppShell() {
       >
         <nav className="p-4 space-y-2">
           <Link to="/tasks" className="flex items-center gap-2 p-2 rounded hover:bg-zinc-800">
-            <ListChecks size={18} /> Tasks
+            <ListChecks size={18} /> Tareas
           </Link>
           <Link to="/reports" className="flex items-center gap-2 p-2 rounded hover:bg-zinc-800">
-            <BarChart3 size={18} /> Reports
+            <BarChart3 size={18} /> Reportes
           </Link>
           <Link to="/reports/history" className="flex items-center gap-2 p-2 rounded hover:bg-zinc-800">
-            <History size={18} /> History
+            <History size={18} /> Historial
           </Link>
         </nav>
       </aside>

@@ -108,8 +108,8 @@ export class TaskServiceImpl implements TaskService {
       .filter(
         (t) =>
           !t.reportedInReportId &&
-          t.createdAt >= start &&
-          t.createdAt <= end,
+          toLocalDateKey(t.createdAt) >= start &&
+          toLocalDateKey(t.createdAt) <= end,
       )
       .toArray();
     return this.attachNotesToAll(entities);
@@ -142,4 +142,12 @@ function toNote(tn: { id: string; content: string; createdAt: string }): Note {
   return { id: tn.id, content: tn.content, createdAt: tn.createdAt };
 }
 
-export const taskService = new TaskServiceImpl();
+// Compares createdAt (a full ISO timestamp) against bare "YYYY-MM-DD" range
+// bounds from a date input; both sides must use the same local-calendar-day key.
+function toLocalDateKey(iso: string): string {
+  const d = new Date(iso);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}

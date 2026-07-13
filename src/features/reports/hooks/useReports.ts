@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { reportService } from '../services/report.service.impl'
-import { taskService } from '../../tasks/services/task.service.impl'
+import { taskService, reportService } from '../../../lib/services'
 import type { Task, Report } from '../../../shared/types'
 import type { CreateReportInput, UpdateReportInput } from '../services/report.service'
 
@@ -43,10 +42,10 @@ export function useCreateReport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Report created')
+      toast.success('Reporte creado')
     },
     onError: () => {
-      toast.error('Failed to create report')
+      toast.error('No se pudo crear el reporte')
     },
   })
 }
@@ -59,10 +58,10 @@ export function useUpdateReport() {
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['reports', id] })
       queryClient.invalidateQueries({ queryKey: ['reports'] })
-      toast.success('Report updated')
+      toast.success('Reporte actualizado')
     },
     onError: () => {
-      toast.error('Failed to update report')
+      toast.error('No se pudo actualizar el reporte')
     },
   })
 }
@@ -74,10 +73,10 @@ export function useDeleteReport() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Report deleted')
+      toast.success('Reporte eliminado')
     },
     onError: () => {
-      toast.error('Failed to delete report')
+      toast.error('No se pudo eliminar el reporte')
     },
   })
 }
