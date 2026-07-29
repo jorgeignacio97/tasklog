@@ -40,7 +40,7 @@ export default function TaskForm({ taskId }: TaskFormProps) {
       title: '',
       description: '',
       category: 'other',
-      status: 'pending',
+      status: 'pendiente',
       estimatedDuration: 0,
     },
   })
@@ -195,7 +195,11 @@ export default function TaskForm({ taskId }: TaskFormProps) {
         />
 
         {/* ── Notes section ─────────────────────────────────────────── */}
-        <Card header={<span className="text-sm font-medium text-zinc-200">Notas</span>}>
+        <Card
+          header={
+            <span className="text-sm font-medium text-zinc-200">Notas</span>
+          }
+        >
           {/* Existing notes */}
           {notes.length > 0 && (
             <ul className="mb-3 space-y-2">
@@ -204,7 +208,9 @@ export default function TaskForm({ taskId }: TaskFormProps) {
                   key={note.id}
                   className="flex items-start justify-between gap-2 rounded-md bg-zinc-800/50 px-3 py-2"
                 >
-                  <span className="flex-1 text-sm text-zinc-300">{note.content}</span>
+                  <span className="flex-1 text-sm text-zinc-300">
+                    {note.content}
+                  </span>
                   <button
                     type="button"
                     onClick={() => deleteNote(note.id)}
@@ -228,7 +234,12 @@ export default function TaskForm({ taskId }: TaskFormProps) {
               placeholder="Agregar una nota…"
               className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-sm text-zinc-100 placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <Button type="button" size="sm" onClick={addNote} disabled={!newNoteText.trim()}>
+            <Button
+              type="button"
+              size="sm"
+              onClick={addNote}
+              disabled={!newNoteText.trim()}
+            >
               <Plus size={14} />
               Agregar
             </Button>

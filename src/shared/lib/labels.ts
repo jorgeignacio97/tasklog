@@ -14,9 +14,9 @@ export const categoryLabels: Record<TaskCategory, string> = {
 }
 
 export const statusLabels: Record<TaskStatus, string> = {
-  pending: 'Pendiente',
-  'in-progress': 'En curso',
-  completed: 'Completada',
+  pendiente: 'Pendiente',
+  'en-curso': 'En curso',
+  completada: 'Completada',
 }
 
 export const reportStatusLabels: Record<ReportStatus, string> = {
@@ -33,9 +33,9 @@ export const categoryOptions: SelectOption[] = [
 ]
 
 export const statusOptions: SelectOption[] = [
-  { value: 'pending', label: statusLabels.pending },
-  { value: 'in-progress', label: statusLabels['in-progress'] },
-  { value: 'completed', label: statusLabels.completed },
+  { value: 'pendiente', label: statusLabels.pendiente },
+  { value: 'en-curso', label: statusLabels['en-curso'] },
+  { value: 'completada', label: statusLabels.completada },
 ]
 
 export const categoryFilterOptions: SelectOption[] = [
@@ -48,7 +48,10 @@ export const statusFilterOptions: SelectOption[] = [
   ...statusOptions,
 ]
 
-export const badgeLabels: Record<TaskCategory | TaskStatus | ReportStatus, string> = {
+export const badgeLabels: Record<
+  TaskCategory | TaskStatus | ReportStatus,
+  string
+> = {
   ...categoryLabels,
   ...statusLabels,
   ...reportStatusLabels,

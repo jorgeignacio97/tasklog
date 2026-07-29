@@ -25,9 +25,9 @@ import {
 } from '../../../shared/lib/labels'
 
 const nextStatus: Record<TaskStatus, TaskStatus> = {
-  pending: 'in-progress',
-  'in-progress': 'completed',
-  completed: 'completed',
+  pendiente: 'en-curso',
+  'en-curso': 'completada',
+  completada: 'completada',
 }
 
 declare module '@tanstack/react-table' {
