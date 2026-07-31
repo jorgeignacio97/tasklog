@@ -16,8 +16,10 @@ export function formatDate(date: string): string {
 }
 
 export function formatDuration(hours: number): string {
-  const h = Math.floor(hours)
-  const m = Math.round((hours - h) * 60)
+  const safeHours = Number.isFinite(hours) && hours >= 0 ? hours : 0
+  const totalMinutes = Math.round(safeHours * 60)
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
   if (h > 0 && m > 0) return `${h}h ${m}m`
   if (h > 0) return `${h}h`
   return `${m}m`

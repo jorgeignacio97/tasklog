@@ -31,13 +31,16 @@ export class ReportServiceImpl implements ReportService {
   }
 
   async update(id: string, data: UpdateReportInput): Promise<Report> {
-    const existing = await db.reports.get(id);
-    if (!existing) {
-      throw new Error(`Report not found: ${id}`);
-    }
-
     const now = new Date().toISOString();
-    await db.reports.update(id, { ...data, updatedAt: now });
+
+    await db.transaction('rw', db.reports, async () => {
+      const existing = await db.reports.get(id);
+      if (!existing) {
+        throw new Error(`Report not found: ${id}`);
+      }
+
+      await db.reports.update(id, { ...data, updatedAt: now });
+    });
 
     const updated = await db.reports.get(id);
     if (!updated) {
@@ -48,13 +51,15 @@ export class ReportServiceImpl implements ReportService {
   }
 
   async delete(id: string): Promise<void> {
-    // Re-open tasks that were linked to this report
-    await db.tasks
-      .where('reportedInReportId')
-      .equals(id)
-      .modify({ reportedInReportId: undefined, updatedAt: new Date().toISOString() });
+    await db.transaction('rw', db.reports, db.tasks, async () => {
+      // Re-open tasks that were linked to this report
+      await db.tasks
+        .where('reportedInReportId')
+        .equals(id)
+        .modify({ reportedInReportId: undefined, updatedAt: new Date().toISOString() });
 
-    await db.reports.delete(id);
+      await db.reports.delete(id);
+    });
   }
 
   async getTasksForReport(reportId: string): Promise<Task[]> {

@@ -5,5 +5,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './vitest.setup.ts',
+    env: {
+      TZ: 'America/Argentina/Buenos_Aires',
+    },
   },
 })

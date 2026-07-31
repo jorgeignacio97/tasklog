@@ -20,15 +20,6 @@ export class TaskServiceImpl implements TaskService {
 
     const { notes, ...rest } = data;
 
-    await db.tasks.add({
-      ...rest,
-      id,
-      createdAt: now,
-      updatedAt: now,
-      completedAt: data.completedAt ?? undefined,
-      reportedInReportId: data.reportedInReportId ?? undefined,
-    });
-
     const noteEntities = notes.map((n) => ({
       id: crypto.randomUUID(),
       taskId: id,
@@ -36,9 +27,20 @@ export class TaskServiceImpl implements TaskService {
       createdAt: n.createdAt ?? now,
     }));
 
-    if (noteEntities.length > 0) {
-      await db.taskNotes.bulkAdd(noteEntities);
-    }
+    await db.transaction('rw', db.tasks, db.taskNotes, async () => {
+      await db.tasks.add({
+        ...rest,
+        id,
+        createdAt: now,
+        updatedAt: now,
+        completedAt: data.completedAt ?? undefined,
+        reportedInReportId: data.reportedInReportId ?? undefined,
+      });
+
+      if (noteEntities.length > 0) {
+        await db.taskNotes.bulkAdd(noteEntities);
+      }
+    });
 
     return {
       ...rest,
@@ -56,11 +58,6 @@ export class TaskServiceImpl implements TaskService {
   }
 
   async update(id: string, data: UpdateTaskInput): Promise<Task> {
-    const existing = await db.tasks.get(id);
-    if (!existing) {
-      throw new Error(`Task not found: ${id}`);
-    }
-
     const now = new Date().toISOString();
     const { notes, ...fields } = data;
 
@@ -69,21 +66,28 @@ export class TaskServiceImpl implements TaskService {
       updatedAt: now,
     };
 
-    await db.tasks.update(id, updates);
-
-    if (notes !== undefined) {
-      await db.taskNotes.where('taskId').equals(id).delete();
-
-      if (notes.length > 0) {
-        const noteEntities = notes.map((n) => ({
-          id: crypto.randomUUID(),
-          taskId: id,
-          content: n.content,
-          createdAt: n.createdAt ?? now,
-        }));
-        await db.taskNotes.bulkAdd(noteEntities);
+    await db.transaction('rw', db.tasks, db.taskNotes, async () => {
+      const existing = await db.tasks.get(id);
+      if (!existing) {
+        throw new Error(`Task not found: ${id}`);
       }
-    }
+
+      await db.tasks.update(id, updates);
+
+      if (notes !== undefined) {
+        await db.taskNotes.where('taskId').equals(id).delete();
+
+        if (notes.length > 0) {
+          const noteEntities = notes.map((n) => ({
+            id: crypto.randomUUID(),
+            taskId: id,
+            content: n.content,
+            createdAt: n.createdAt ?? now,
+          }));
+          await db.taskNotes.bulkAdd(noteEntities);
+        }
+      }
+    });
 
     const updated = await db.tasks.get(id);
     if (!updated) {
@@ -94,8 +98,10 @@ export class TaskServiceImpl implements TaskService {
   }
 
   async delete(id: string): Promise<void> {
-    await db.taskNotes.where('taskId').equals(id).delete();
-    await db.tasks.delete(id);
+    await db.transaction('rw', db.tasks, db.taskNotes, async () => {
+      await db.taskNotes.where('taskId').equals(id).delete();
+      await db.tasks.delete(id);
+    });
   }
 
   async getByCategory(category: TaskCategory): Promise<Task[]> {
