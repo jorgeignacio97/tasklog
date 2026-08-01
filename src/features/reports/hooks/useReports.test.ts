@@ -106,6 +106,19 @@ describe('useReports hooks (RHK-1..4)', () => {
     expect(reportServiceMock.getById).not.toHaveBeenCalled()
   })
 
+  it('RHK-1 Happy: useReport(id) fetches by id and returns data', async () => {
+    vi.mocked(reportServiceMock.getById!).mockResolvedValue(
+      makeReport({ id: 'r-1', status: 'sent' }),
+    )
+
+    const { result } = renderHookWithProviders(() => useReport('r-1'))
+
+    await waitFor(() => expect(result.current.data?.id).toBe('r-1'))
+    expect(reportServiceMock.getById).toHaveBeenCalledWith('r-1')
+    expect(result.current.data?.status).toBe('sent')
+    expect(result.current.isLoading).toBe(false)
+  })
+
   it('RHK-2 Happy: create once without taskIds, update once per task, both key sets invalidated', async () => {
     reportServiceMock.getAll.mockResolvedValue([])
     taskServiceMock.getAll.mockResolvedValue([])
@@ -180,11 +193,26 @@ describe('useReports hooks (RHK-1..4)', () => {
     expect(sonnerToast.success).toHaveBeenCalledWith('Reporte creado')
   })
 
-  it('RHK-2 Error: a rejected task update rejects the mutation and toasts error', async () => {
+  it('RHK-2 Error: a rejected task update rejects the mutation, toasts error, and does not invalidate', async () => {
     reportServiceMock.create.mockResolvedValue(makeReport({ id: 'r-new' }))
     taskServiceMock.update.mockRejectedValue(new Error('link failed'))
+    vi.mocked(reportServiceMock.getAll!).mockResolvedValue([])
+    taskServiceMock.getAll.mockResolvedValue([])
+    vi.mocked(reportServiceMock.getById!).mockResolvedValue(
+      makeReport({ id: 'r-1' }),
+    )
 
-    const { result } = renderHookWithProviders(() => useCreateReport())
+    const { result } = renderHookWithProviders(() => {
+      useReports()
+      useTasks()
+      useReport('r-1')
+      return useCreateReport()
+    })
+    await waitFor(() =>
+      expect(reportServiceMock.getAll).toHaveBeenCalledTimes(1),
+    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(1))
 
     await expect(
       result.current.mutateAsync({
@@ -199,19 +227,31 @@ describe('useReports hooks (RHK-1..4)', () => {
 
     expect(sonnerToast.error).toHaveBeenCalledWith('No se pudo crear el reporte')
     expect(reportServiceMock.create).toHaveBeenCalledTimes(1)
+    // No invalidation: mounted query call counts unchanged inside waitFor
+    // settle windows — a spurious refetch would fail these deterministically.
+    await waitFor(() =>
+      expect(reportServiceMock.getAll).toHaveBeenCalledTimes(1),
+    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(1))
   })
 
-  it('RHK-3 Happy: useUpdateReport invalidates the report and its list', async () => {
+  it('RHK-3 Happy: useUpdateReport invalidates the report and its list; detail-key refetch proven', async () => {
     reportServiceMock.getAll.mockResolvedValue([])
     reportServiceMock.update.mockResolvedValue(makeReport({ status: 'sent' }))
+    vi.mocked(reportServiceMock.getById!).mockResolvedValue(
+      makeReport({ id: 'r-1', status: 'sent' }),
+    )
 
     const { result } = renderHookWithProviders(() => {
       useReports()
+      useReport('r-1')
       return useUpdateReport()
     })
     await waitFor(() =>
       expect(reportServiceMock.getAll).toHaveBeenCalledTimes(1),
     )
+    await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(1))
 
     await result.current.mutateAsync({ id: 'r-1', data: { status: 'sent' } })
 
@@ -221,6 +261,10 @@ describe('useReports hooks (RHK-1..4)', () => {
     await waitFor(() =>
       expect(reportServiceMock.getAll).toHaveBeenCalledTimes(2),
     )
+    // Detail-key refetch proven at runtime: invalidating ['reports','r-1']
+    // (exact) AND ['reports'] (prefix) both match the detail observer in the
+    // same synchronous block → getById fires 1 → 3 atomically (NOT 2).
+    await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(3))
     expect(sonnerToast.success).toHaveBeenCalledWith('Reporte actualizado')
   })
 
