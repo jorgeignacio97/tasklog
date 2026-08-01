@@ -3,6 +3,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 import { Toaster } from 'sonner'
 import { useReminder } from './features/notifications'
+import RouteErrorBoundary from './shared/components/RouteErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,6 +19,7 @@ const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   scrollRestoration: true,
+  defaultErrorComponent: RouteErrorBoundary,
 })
 
 declare module '@tanstack/react-router' {
