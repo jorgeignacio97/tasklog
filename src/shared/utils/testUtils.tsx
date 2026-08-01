@@ -58,7 +58,7 @@ const routeTree = rootRoute.addChildren([
   reportsRoute.addChildren([reportsHistoryRoute]),
 ])
 
-interface HarnessOptions {
+type HarnessOptions = {
   route?: string
 }
 
