@@ -64,6 +64,15 @@ function task(createdAt: string) {
   }
 }
 
+// Clock-derived createdAt: exactly n days before the injected now, preserving
+// time-of-day. Derives from the injected clock only — never wall clock, never
+// TZ-dependent literals (setDate handles month/year rollovers in local time).
+function createdAtDaysAgo(n: number, now: Date): Date {
+  const d = new Date(now)
+  d.setDate(d.getDate() - n)
+  return d
+}
+
 describe('useReminder (RM-1..5)', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -82,11 +91,12 @@ describe('useReminder (RM-1..5)', () => {
 
   it('RM-1 Happy: all 4 clock sites use the injected clock — no real dates', async () => {
     taskServiceMock.getAll.mockResolvedValue([
-      task('2026-09-27T12:00:00.000Z'),
+      task(createdAtDaysAgo(3, fixedNow()).toISOString()),
+      task(createdAtDaysAgo(5, fixedNow()).toISOString()),
     ])
     taskServiceMock.getUnreportedInRange.mockResolvedValue([
-      task('2026-09-20T12:00:00.000Z'),
-      task('2026-09-25T12:00:00.000Z'),
+      task(createdAtDaysAgo(10, fixedNow()).toISOString()),
+      task(createdAtDaysAgo(5, fixedNow()).toISOString()),
     ])
 
     renderHookWithProviders(() => useReminder(fixedNow))
@@ -140,8 +150,8 @@ describe('useReminder (RM-1..5)', () => {
 
   it('RM-3 Happy: newest task 3 days old → inactivity notification, key set to today', async () => {
     taskServiceMock.getAll.mockResolvedValue([
-      task('2026-09-25T12:00:00.000Z'),
-      task('2026-09-27T12:00:00.000Z'),
+      task(createdAtDaysAgo(5, fixedNow()).toISOString()),
+      task(createdAtDaysAgo(3, fixedNow()).toISOString()),
     ])
 
     renderHookWithProviders(() => useReminder(fixedNow))
@@ -172,7 +182,7 @@ describe('useReminder (RM-1..5)', () => {
 
   it('RM-3 Edge: newest task younger than 3 days → no notification, key untouched', async () => {
     taskServiceMock.getAll.mockResolvedValue([
-      task('2026-09-28T12:00:00.000Z'),
+      task(createdAtDaysAgo(2, fixedNow()).toISOString()),
     ])
 
     renderHookWithProviders(() => useReminder(fixedNow))
@@ -186,11 +196,11 @@ describe('useReminder (RM-1..5)', () => {
 
   it('RM-4 Happy: near month end + unreported tasks → month-end notification, key set', async () => {
     taskServiceMock.getAll.mockResolvedValue([
-      task('2026-09-27T12:00:00.000Z'),
+      task(createdAtDaysAgo(3, fixedNow()).toISOString()),
     ])
     taskServiceMock.getUnreportedInRange.mockResolvedValue([
-      task('2026-09-10T12:00:00.000Z'),
-      task('2026-09-15T12:00:00.000Z'),
+      task(createdAtDaysAgo(20, fixedNow()).toISOString()),
+      task(createdAtDaysAgo(15, fixedNow()).toISOString()),
     ])
 
     renderHookWithProviders(() => useReminder(fixedNow))
@@ -211,10 +221,10 @@ describe('useReminder (RM-1..5)', () => {
     localStorage.setItem(REMINDER_INACTIVE_KEY, '2026-09-30')
     localStorage.setItem(REMINDER_UNREPORTED_KEY, '2026-09-30')
     taskServiceMock.getAll.mockResolvedValue([
-      task('2026-09-01T12:00:00.000Z'),
+      task(createdAtDaysAgo(29, fixedNow()).toISOString()),
     ])
     taskServiceMock.getUnreportedInRange.mockResolvedValue([
-      task('2026-09-10T12:00:00.000Z'),
+      task(createdAtDaysAgo(20, fixedNow()).toISOString()),
     ])
 
     renderHookWithProviders(() => useReminder(fixedNow))
