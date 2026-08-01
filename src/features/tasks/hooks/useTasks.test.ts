@@ -138,6 +138,15 @@ describe('useTasks hooks (THK-1..3)', () => {
       notes: [],
     })
 
+    // Exact input payload reaches the service
+    expect(taskServiceMock.create).toHaveBeenCalledWith({
+      title: 'New task',
+      category: 'frontend',
+      status: 'pendiente',
+      estimatedDuration: 2,
+      notes: [],
+    })
+
     // Invalidation triggers a refetch of the active useTasks query
     await waitFor(() =>
       expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2),
@@ -168,22 +177,29 @@ describe('useTasks hooks (THK-1..3)', () => {
     ).rejects.toThrow('create failed')
 
     expect(sonnerToast.error).toHaveBeenCalledWith('No se pudo crear la tarea')
-    expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1)
+    // No invalidation: getAll call count unchanged inside a waitFor settle
+    // window — a spurious refetch would push the count to 2 and fail here.
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
   })
 
-  it('THK-3: useUpdateTask invalidates tasks and toasts success', async () => {
+  it('THK-3: useUpdateTask invalidates tasks and toasts success; detail-key refetch proven', async () => {
     taskServiceMock.getAll.mockResolvedValue([])
+    taskServiceMock.getById.mockResolvedValue(
+      makeTask({ id: 't-1', title: 'Renamed' }),
+    )
     taskServiceMock.update.mockResolvedValue(
       makeTask({ id: 't-1', title: 'Renamed' }),
     )
 
     const { result } = renderHookWithProviders(() => {
       useTasks()
+      useTask('t-1')
       return useUpdateTask()
     })
     await waitFor(() =>
       expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1),
     )
+    await waitFor(() => expect(taskServiceMock.getById).toHaveBeenCalledTimes(1))
 
     await result.current.mutateAsync({
       id: 't-1',
@@ -196,6 +212,10 @@ describe('useTasks hooks (THK-1..3)', () => {
     await waitFor(() =>
       expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2),
     )
+    // Detail-key refetch proven at runtime: invalidating ['tasks','t-1']
+    // (exact) AND ['tasks'] (prefix) both match the detail observer in the
+    // same synchronous block → getById fires 1 → 3 atomically (NOT 2).
+    await waitFor(() => expect(taskServiceMock.getById).toHaveBeenCalledTimes(3))
     expect(sonnerToast.success).toHaveBeenCalledWith('Tarea actualizada')
   })
 
