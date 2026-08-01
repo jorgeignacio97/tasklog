@@ -1,32 +1,42 @@
-# React + TypeScript + Vite
+# tasklog
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Local-first task and time-tracking app. Log tasks by category, track their status and estimated duration, and build reports from completed work in a date range — everything persisted client-side (IndexedDB via Dexie), no backend required.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Tasks** — create, edit, and track tasks with category, status, estimated duration, and notes.
+- **Reports** — build a report from unreported tasks in a date range and export it as a PDF (`@react-pdf/renderer`).
+- **History** — browse previously generated reports.
+- **Reminders** — in-app notifications for tasks that have been sitting too long.
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 + Vite + TypeScript (strict)
+- TanStack Router (routing) + TanStack Query (server-state pattern over local services) + TanStack Table
+- Zustand (UI state), React Hook Form + Zod (forms/validation)
+- Tailwind CSS v4
+- Dexie (IndexedDB) for local persistence
+- Vitest + Testing Library for tests
 
-## Expanding the Oxlint configuration
+## Commands
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+pnpm install       # install dependencies
+pnpm dev           # start dev server
+pnpm build         # typecheck + production build
+pnpm lint          # lint
+pnpm test          # run test suite
+pnpm test:watch    # run tests in watch mode
+pnpm format        # format with Prettier
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Architecture
+
+Screaming/feature-based structure:
+
+- `src/features/<name>/` — `components`, `hooks`, `services`, `schemas`; each feature exposes its public API only via `index.ts`.
+- `src/shared/` — reusable code across features (components, layout, utils, types).
+- `src/routes/` — TanStack Router route definitions.
+- `src/stores/` — Zustand UI state.
+
+See `CLAUDE.md` for the full set of conventions this codebase follows.
