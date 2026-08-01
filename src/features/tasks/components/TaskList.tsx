@@ -7,6 +7,7 @@ import {
   flexRender,
   type SortingState,
   type ColumnDef,
+  type RowData,
 } from '@tanstack/react-table'
 import { Plus, ArrowUpDown } from 'lucide-react'
 import { useTasks, useUpdateTask, useDeleteTask } from '../hooks/useTasks'
@@ -31,9 +32,9 @@ const nextStatus: Record<TaskStatus, TaskStatus> = {
 }
 
 declare module '@tanstack/react-table' {
-  interface TableMeta<TData> {
-    onToggleStatus: (task: Task) => void
-    onDeleteClick: (task: Task) => void
+  interface TableMeta<TData extends RowData> {
+    onToggleStatus: (task: TData) => void
+    onDeleteClick: (task: TData) => void
   }
 }
 
