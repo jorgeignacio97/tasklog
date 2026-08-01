@@ -278,7 +278,7 @@ describe('TaskServiceImpl', () => {
     })
 
     it('TS-8a: create() rolls back the task row if note insertion fails', async () => {
-      const fixedId = 'fixed-create-id'
+      const fixedId = 'fixed-create-id-0000-0000'
       vi.spyOn(crypto, 'randomUUID').mockReturnValueOnce(fixedId)
       vi.spyOn(db.taskNotes, 'bulkAdd').mockRejectedValueOnce(new Error('simulated failure'))
 
