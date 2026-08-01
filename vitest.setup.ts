@@ -20,3 +20,31 @@ if (typeof dialogProto.close !== 'function') {
     this.open = false
   }
 }
+
+// Node >=22 exposes an experimental `localStorage` global gated behind
+// `--localstorage-file`. Vitest's jsdom env then skips copying jsdom's real
+// localStorage (populateGlobal only copies window keys that are absent from
+// globalThis), so tests would see `undefined`. Provide a deterministic
+// Map-backed polyfill instead — useReminder stores reminder day keys here.
+if (typeof globalThis.localStorage?.getItem !== 'function') {
+  const store = new Map<string, string>()
+  const storage: Storage = {
+    get length() {
+      return store.size
+    },
+    clear: () => store.clear(),
+    getItem: (key) => store.get(key) ?? null,
+    key: (index) => [...store.keys()][index] ?? null,
+    removeItem: (key) => {
+      store.delete(key)
+    },
+    setItem: (key, value) => {
+      store.set(key, String(value))
+    },
+  }
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: storage,
+    configurable: true,
+    writable: true,
+  })
+}
