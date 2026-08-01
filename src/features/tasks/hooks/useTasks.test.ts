@@ -215,6 +215,8 @@ describe('useTasks hooks (THK-1..3)', () => {
     // Detail-key refetch proven at runtime: invalidating ['tasks','t-1']
     // (exact) AND ['tasks'] (prefix) both match the detail observer in the
     // same synchronous block → getById fires 1 → 3 atomically (NOT 2).
+    // 3 (not 2) is a known, accepted inefficiency from the two overlapping
+    // invalidateQueries calls in useUpdateTask — not a bug to "fix".
     await waitFor(() => expect(taskServiceMock.getById).toHaveBeenCalledTimes(3))
     expect(sonnerToast.success).toHaveBeenCalledWith('Tarea actualizada')
   })

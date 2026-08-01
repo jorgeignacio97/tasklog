@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react'
+import type { Mock } from 'vitest'
 import { renderHookWithProviders } from '../../../shared/utils/testUtils'
 import type { ReportService } from '../services/report.service'
 import { useTasks } from '../../tasks/hooks/useTasks'
@@ -28,7 +29,7 @@ const { taskServiceMock, reportServiceMock, sonnerToast } = vi.hoisted(() => ({
     update: vi.fn(),
     delete: vi.fn(),
     getTasksForReport: vi.fn(),
-  } as Partial<ReportService>,
+  } as { [K in keyof ReportService]: Mock<ReportService[K]> },
   sonnerToast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -107,7 +108,7 @@ describe('useReports hooks (RHK-1..4)', () => {
   })
 
   it('RHK-1 Happy: useReport(id) fetches by id and returns data', async () => {
-    vi.mocked(reportServiceMock.getById!).mockResolvedValue(
+    reportServiceMock.getById.mockResolvedValue(
       makeReport({ id: 'r-1', status: 'sent' }),
     )
 
@@ -196,9 +197,9 @@ describe('useReports hooks (RHK-1..4)', () => {
   it('RHK-2 Error: a rejected task update rejects the mutation, toasts error, and does not invalidate', async () => {
     reportServiceMock.create.mockResolvedValue(makeReport({ id: 'r-new' }))
     taskServiceMock.update.mockRejectedValue(new Error('link failed'))
-    vi.mocked(reportServiceMock.getAll!).mockResolvedValue([])
+    reportServiceMock.getAll.mockResolvedValue([])
     taskServiceMock.getAll.mockResolvedValue([])
-    vi.mocked(reportServiceMock.getById!).mockResolvedValue(
+    reportServiceMock.getById.mockResolvedValue(
       makeReport({ id: 'r-1' }),
     )
 
@@ -239,7 +240,7 @@ describe('useReports hooks (RHK-1..4)', () => {
   it('RHK-3 Happy: useUpdateReport invalidates the report and its list; detail-key refetch proven', async () => {
     reportServiceMock.getAll.mockResolvedValue([])
     reportServiceMock.update.mockResolvedValue(makeReport({ status: 'sent' }))
-    vi.mocked(reportServiceMock.getById!).mockResolvedValue(
+    reportServiceMock.getById.mockResolvedValue(
       makeReport({ id: 'r-1', status: 'sent' }),
     )
 
@@ -264,6 +265,8 @@ describe('useReports hooks (RHK-1..4)', () => {
     // Detail-key refetch proven at runtime: invalidating ['reports','r-1']
     // (exact) AND ['reports'] (prefix) both match the detail observer in the
     // same synchronous block → getById fires 1 → 3 atomically (NOT 2).
+    // 3 (not 2) is a known, accepted inefficiency from the two overlapping
+    // invalidateQueries calls in useUpdateReport — not a bug to "fix".
     await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(3))
     expect(sonnerToast.success).toHaveBeenCalledWith('Reporte actualizado')
   })
