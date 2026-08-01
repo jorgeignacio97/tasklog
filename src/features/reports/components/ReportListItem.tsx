@@ -1,8 +1,14 @@
-import { FileText, Trash2, Send } from 'lucide-react'
+import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { pdf } from '@react-pdf/renderer'
+import { toast } from 'sonner'
+import { FileText, Trash2, Send, Download } from 'lucide-react'
 import Card from '../../../shared/components/Card'
 import Badge from '../../../shared/components/Badge'
 import { Button } from '../../../shared/components/Button'
 import { formatDate, formatDuration } from '../../../shared/utils/cn'
+import { reportService } from '../../../lib/services'
+import { ReportPdfDocument } from './ReportPdfDocument'
 import type { Report } from '../../../shared/types'
 
 interface ReportListItemProps {
@@ -20,6 +26,36 @@ export function ReportListItem({
   isMarkingSent,
   isDeleting,
 }: ReportListItemProps) {
+  const queryClient = useQueryClient()
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  async function handleDownloadPdf() {
+    setIsDownloading(true)
+    try {
+      const tasks = await queryClient.fetchQuery({
+        queryKey: ['reports', report.id, 'tasks'],
+        queryFn: () => reportService.getTasksForReport(report.id),
+        staleTime: Infinity,
+      })
+      const blob = await pdf(
+        <ReportPdfDocument report={report} tasks={tasks} />,
+      ).toBlob()
+
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `reporte-${report.id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('No se pudo generar el PDF del reporte')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   return (
     <Card>
       <div className="flex items-start justify-between gap-4">
@@ -73,6 +109,16 @@ export function ReportListItem({
               <Send size={14} />
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownloadPdf}
+            isLoading={isDownloading}
+            title="Descargar PDF"
+            aria-label="Descargar PDF"
+          >
+            <Download size={14} />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
