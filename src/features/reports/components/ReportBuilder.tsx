@@ -10,6 +10,165 @@ import type { Task, TaskCategory } from '../../../shared/types'
 
 const categoryOrder: TaskCategory[] = ['frontend', 'backend', 'bug', 'review', 'other']
 
+// ── Summary cards (module scope: stable identity across renders — RB-1) ──
+
+interface SummaryCardsProps {
+  showPreview: boolean
+  isLoadingPreview: boolean
+  unreportedTasks: Task[] | undefined
+  totalHours: number
+  categoryCount: number
+}
+
+function SummaryCards({
+  showPreview,
+  isLoadingPreview,
+  unreportedTasks,
+  totalHours,
+  categoryCount,
+}: SummaryCardsProps) {
+  if (!showPreview) return null
+
+  return (
+    <div className="grid grid-cols-3 gap-4 mb-6">
+      <Card>
+        <div className="flex items-center gap-3">
+          <FileText className="text-indigo-400" size={20} />
+          <div>
+            <p className="text-2xl font-bold text-zinc-100">
+              {isLoadingPreview ? '…' : unreportedTasks?.length ?? 0}
+            </p>
+            <p className="text-xs text-zinc-400">Total tareas</p>
+          </div>
+        </div>
+      </Card>
+      <Card>
+        <div className="flex items-center gap-3">
+          <Clock className="text-emerald-400" size={20} />
+          <div>
+            <p className="text-2xl font-bold text-zinc-100">
+              {isLoadingPreview ? '…' : formatDuration(totalHours)}
+            </p>
+            <p className="text-xs text-zinc-400">Total horas</p>
+          </div>
+        </div>
+      </Card>
+      <Card>
+        <div className="flex items-center gap-3">
+          <ListTree className="text-amber-400" size={20} />
+          <div>
+            <p className="text-2xl font-bold text-zinc-100">
+              {isLoadingPreview ? '…' : categoryCount}
+            </p>
+            <p className="text-xs text-zinc-400">Categorías</p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+// ── Preview area (module scope: stable identity across renders — RB-1) ──
+
+interface PreviewAreaProps {
+  showPreview: boolean
+  isLoadingPreview: boolean
+  unreportedTasks: Task[] | undefined
+  tasksByCategory: Map<TaskCategory, Task[]>
+  startDate: string
+  endDate: string
+}
+
+function PreviewArea({
+  showPreview,
+  isLoadingPreview,
+  unreportedTasks,
+  tasksByCategory,
+  startDate,
+  endDate,
+}: PreviewAreaProps) {
+  if (!showPreview) {
+    return (
+      <div className="text-center py-16 text-zinc-500">
+        <Eye size={40} className="mx-auto mb-3 opacity-50" />
+        <p>Selecciona un rango de fechas y haz clic en Vista previa para ver las tareas no reportadas.</p>
+      </div>
+    )
+  }
+
+  if (isLoadingPreview) {
+    return (
+      <div className="flex items-center justify-center py-16 text-zinc-400">
+        <Loader2 size={24} className="animate-spin mr-2" />
+        Cargando tareas…
+      </div>
+    )
+  }
+
+  if (!unreportedTasks || unreportedTasks.length === 0) {
+    return (
+      <div className="text-center py-16 text-zinc-500">
+        <Calendar size={40} className="mx-auto mb-3 opacity-50" />
+        <p>No hay tareas sin reportar en este rango.</p>
+        <p className="text-sm mt-1">
+          Todas las tareas creadas entre {formatDate(startDate)} y{' '}
+          {formatDate(endDate)} ya fueron reportadas.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {Array.from(tasksByCategory.entries()).map(([category, tasks]) => (
+        <div key={category}>
+          <div className="flex items-center gap-2 mb-3">
+            <Badge variant={category} />
+            <span className="text-sm text-zinc-400">
+              {tasks.length} tarea{tasks.length !== 1 ? 's' : ''}
+              {' · '}
+              {formatDuration(
+                tasks.reduce((s, t) => s + t.estimatedDuration, 0),
+              )}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {tasks.map((task) => {
+              const firstNote = task.notes[0]
+              const notePreview =
+                firstNote && firstNote.content.length > 80
+                  ? firstNote.content.slice(0, 80) + '…'
+                  : firstNote?.content
+
+              return (
+                <Card key={task.id} className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-zinc-100 truncate">
+                      {task.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <Badge variant={task.category} />
+                      <Badge variant={task.status} />
+                      <span className="text-xs text-zinc-500">
+                        {formatDuration(task.estimatedDuration)}
+                      </span>
+                    </div>
+                    {notePreview && (
+                      <p className="text-xs text-zinc-500 mt-1.5 line-clamp-1">
+                        {notePreview}
+                      </p>
+                    )}
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function ReportBuilder() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -59,133 +218,6 @@ export default function ReportBuilder() {
           navigate({ to: '/reports/history' })
         },
       },
-    )
-  }
-
-  // ── Summary cards ────────────────────────────────────────
-  function SummaryCards() {
-    if (!showPreview) return null
-
-    return (
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card>
-          <div className="flex items-center gap-3">
-            <FileText className="text-indigo-400" size={20} />
-            <div>
-              <p className="text-2xl font-bold text-zinc-100">
-                {isLoadingPreview ? '…' : unreportedTasks?.length ?? 0}
-              </p>
-              <p className="text-xs text-zinc-400">Total tareas</p>
-            </div>
-          </div>
-        </Card>
-        <Card>
-          <div className="flex items-center gap-3">
-            <Clock className="text-emerald-400" size={20} />
-            <div>
-              <p className="text-2xl font-bold text-zinc-100">
-                {isLoadingPreview ? '…' : formatDuration(totalHours)}
-              </p>
-              <p className="text-xs text-zinc-400">Total horas</p>
-            </div>
-          </div>
-        </Card>
-        <Card>
-          <div className="flex items-center gap-3">
-            <ListTree className="text-amber-400" size={20} />
-            <div>
-              <p className="text-2xl font-bold text-zinc-100">
-                {isLoadingPreview ? '…' : categoryCount}
-              </p>
-              <p className="text-xs text-zinc-400">Categorías</p>
-            </div>
-          </div>
-        </Card>
-      </div>
-    )
-  }
-
-  // ── Preview area ─────────────────────────────────────────
-  function PreviewArea() {
-    if (!showPreview) {
-      return (
-        <div className="text-center py-16 text-zinc-500">
-          <Eye size={40} className="mx-auto mb-3 opacity-50" />
-          <p>Selecciona un rango de fechas y haz clic en Vista previa para ver las tareas no reportadas.</p>
-        </div>
-      )
-    }
-
-    if (isLoadingPreview) {
-      return (
-        <div className="flex items-center justify-center py-16 text-zinc-400">
-          <Loader2 size={24} className="animate-spin mr-2" />
-          Cargando tareas…
-        </div>
-      )
-    }
-
-    if (!unreportedTasks || unreportedTasks.length === 0) {
-      return (
-        <div className="text-center py-16 text-zinc-500">
-          <Calendar size={40} className="mx-auto mb-3 opacity-50" />
-          <p>No hay tareas sin reportar en este rango.</p>
-          <p className="text-sm mt-1">
-            Todas las tareas creadas entre {formatDate(startDate)} y{' '}
-            {formatDate(endDate)} ya fueron reportadas.
-          </p>
-        </div>
-      )
-    }
-
-    return (
-      <div className="space-y-6">
-        {Array.from(tasksByCategory.entries()).map(([category, tasks]) => (
-          <div key={category}>
-            <div className="flex items-center gap-2 mb-3">
-              <Badge variant={category} />
-              <span className="text-sm text-zinc-400">
-                {tasks.length} tarea{tasks.length !== 1 ? 's' : ''}
-                {' · '}
-                {formatDuration(
-                  tasks.reduce((s, t) => s + t.estimatedDuration, 0),
-                )}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {tasks.map((task) => {
-                const firstNote = task.notes[0]
-                const notePreview =
-                  firstNote && firstNote.content.length > 80
-                    ? firstNote.content.slice(0, 80) + '…'
-                    : firstNote?.content
-
-                return (
-                  <Card key={task.id} className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-zinc-100 truncate">
-                        {task.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <Badge variant={task.category} />
-                        <Badge variant={task.status} />
-                        <span className="text-xs text-zinc-500">
-                          {formatDuration(task.estimatedDuration)}
-                        </span>
-                      </div>
-                      {notePreview && (
-                        <p className="text-xs text-zinc-500 mt-1.5 line-clamp-1">
-                          {notePreview}
-                        </p>
-                      )}
-                    </div>
-                  </Card>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
     )
   }
 
@@ -245,10 +277,23 @@ export default function ReportBuilder() {
       </Card>
 
       {/* Summary cards */}
-      <SummaryCards />
+      <SummaryCards
+        showPreview={showPreview}
+        isLoadingPreview={isLoadingPreview}
+        unreportedTasks={unreportedTasks}
+        totalHours={totalHours}
+        categoryCount={categoryCount}
+      />
 
       {/* Preview / results */}
-      <PreviewArea />
+      <PreviewArea
+        showPreview={showPreview}
+        isLoadingPreview={isLoadingPreview}
+        unreportedTasks={unreportedTasks}
+        tasksByCategory={tasksByCategory}
+        startDate={startDate}
+        endDate={endDate}
+      />
 
       {/* Generate Report button */}
       {showPreview && unreportedTasks !== undefined && (
