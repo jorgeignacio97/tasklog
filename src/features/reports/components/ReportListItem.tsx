@@ -30,6 +30,7 @@ export function ReportListItem({
   const [isDownloading, setIsDownloading] = useState(false)
 
   async function handleDownloadPdf() {
+    if (isDownloading) return
     setIsDownloading(true)
     try {
       const tasks = await queryClient.fetchQuery({

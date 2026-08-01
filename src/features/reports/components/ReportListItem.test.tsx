@@ -77,7 +77,7 @@ describe('ReportListItem PDF download (RLI-1)', () => {
   let capturedAnchor: HTMLAnchorElement | null
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     capturedAnchor = null
     toBlobMock.mockResolvedValue(new Blob(['pdf'], { type: 'application/pdf' }))
     pdfMock.mockReturnValue({ toBlob: toBlobMock })

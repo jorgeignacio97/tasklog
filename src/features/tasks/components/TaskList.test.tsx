@@ -72,7 +72,7 @@ function firstRowTitle(container: HTMLElement): string | null {
 
 describe('TaskList (TC-2)', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('TC-2 Happy: category, status, and search filters render only matching rows', async () => {

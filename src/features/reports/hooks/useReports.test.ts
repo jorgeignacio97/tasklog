@@ -73,7 +73,7 @@ function makeTask(overrides: Partial<Record<string, unknown>> = {}) {
 
 describe('useReports hooks (RHK-1..4)', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('RHK-1 Happy: useReports returns data and settles loading', async () => {

@@ -48,7 +48,7 @@ function makeTask(overrides: Partial<CreateTaskInput & { id: string }> = {}) {
 
 describe('useTasks hooks (THK-1..3)', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('THK-1 Happy: useTasks returns data and settles loading', async () => {

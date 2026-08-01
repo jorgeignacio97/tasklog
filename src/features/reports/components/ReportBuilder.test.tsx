@@ -80,7 +80,7 @@ async function waitForPreviewData() {
 
 describe('ReportBuilder (RB-1..3)', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('RB-1: SummaryCards keeps a stable element identity across an unrelated re-render', async () => {

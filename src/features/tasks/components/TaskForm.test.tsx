@@ -54,7 +54,7 @@ async function fillValidForm() {
 
 describe('TaskForm (TC-1)', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('TC-1 Error: empty title blocks submit with an inline error and no mutation', async () => {
