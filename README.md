@@ -1,45 +1,46 @@
 # tasklog
 
-Local-first task and time-tracking app. Log tasks by category, track their status and estimated duration, and build reports from completed work in a date range — everything persisted client-side (IndexedDB via Dexie), no backend required.
+App local-first de registro de tareas y control de tiempos. Registrá tareas por categoría, seguí su estado y duración estimada, y armá reportes a partir del trabajo completado en un rango de fechas — todo persistido del lado del cliente (IndexedDB vía Dexie), sin necesidad de backend.
 
-## Features
+## Funcionalidades
 
-- **Tasks** — create, edit, and track tasks with category, status, estimated duration, and notes.
-- **Reports** — build a report from unreported tasks in a date range and export it as a PDF (`@react-pdf/renderer`).
-- **History** — browse previously generated reports.
-- **Reminders** — in-app notifications for tasks that have been sitting too long.
-- **Backup** — export/import all local data as JSON from the Settings screen.
-- **Installable & offline** — PWA with a precaching service worker; works fully offline once installed.
+- **Tareas** — creá, editá y seguí tareas con categoría, estado, duración estimada y notas.
+- **Reportes** — armá un reporte a partir de tareas no reportadas en un rango de fechas y exportalo como PDF (`@react-pdf/renderer`).
+- **Historial** — navegá los reportes generados anteriormente.
+- **Recordatorios** — notificaciones dentro de la app para tareas que quedaron sin actualizar por mucho tiempo.
+- **Backup** — exportá/importá todos los datos locales como JSON desde la pantalla de Configuración.
+- **Instalable y offline** — PWA con service worker de precacheo; funciona completamente sin conexión una vez instalada.
 
 ## Stack
 
 - React 19 + Vite + TypeScript (strict)
-- TanStack Router (routing) + TanStack Query (server-state pattern over local services) + TanStack Table
-- Zustand (UI state), React Hook Form + Zod (forms/validation)
+- TanStack Router (routing) + TanStack Query (patrón de server-state sobre servicios locales) + TanStack Table
+- Zustand (estado de UI), React Hook Form + Zod (formularios/validación)
 - Tailwind CSS v4
-- Dexie (IndexedDB) for local persistence
-- vite-plugin-pwa (installable, offline service worker)
-- Vitest + Testing Library for tests
+- Dexie (IndexedDB) para persistencia local
+- vite-plugin-pwa (instalable, service worker offline)
+- Vitest + Testing Library para tests
 
-## Commands
+## Comandos
 
 ```bash
-pnpm install       # install dependencies
-pnpm dev           # start dev server
-pnpm build         # typecheck + production build
+pnpm install       # instalar dependencias
+pnpm dev           # levantar el servidor de desarrollo
+pnpm build         # typecheck + build de producción
 pnpm lint          # lint
-pnpm test          # run test suite
-pnpm test:watch    # run tests in watch mode
-pnpm format        # format with Prettier
+pnpm test          # correr la suite de tests
+pnpm test:watch    # correr tests en modo watch
+pnpm test:coverage # correr tests con reporte de cobertura
+pnpm format        # formatear con Prettier
 ```
 
-## Architecture
+## Arquitectura
 
-Screaming/feature-based structure:
+Estructura Screaming/feature-based:
 
-- `src/features/<name>/` — `components`, `hooks`, `services`, `schemas`; each feature exposes its public API only via `index.ts`.
-- `src/shared/` — reusable code across features (components, layout, utils, types).
-- `src/routes/` — TanStack Router route definitions.
-- `src/stores/` — Zustand UI state.
+- `src/features/<nombre>/` — `components`, `hooks`, `services`, `schemas`; cada feature expone su API pública solo vía `index.ts`.
+- `src/shared/` — código reutilizable entre features (components, layout, utils, types).
+- `src/routes/` — definiciones de rutas de TanStack Router.
+- `src/stores/` — estado de UI con Zustand.
 
-See `CLAUDE.md` for the full set of conventions this codebase follows.
+Ver `CLAUDE.md` para el conjunto completo de convenciones que sigue este codebase.
