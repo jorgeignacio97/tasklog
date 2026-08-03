@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TasksIndexRouteImport } from './routes/tasks/index'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
@@ -16,6 +17,11 @@ import { Route as TasksNewRouteImport } from './routes/tasks/new'
 import { Route as TasksTaskIdRouteImport } from './routes/tasks/$taskId'
 import { Route as ReportsHistoryRouteImport } from './routes/reports/history'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const ReportsHistoryRoute = ReportsHistoryRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/reports/history': typeof ReportsHistoryRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/tasks/new': typeof TasksNewRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/reports/history': typeof ReportsHistoryRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/tasks/new': typeof TasksNewRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/reports/history': typeof ReportsHistoryRoute
   '/tasks/$taskId': typeof TasksTaskIdRoute
   '/tasks/new': typeof TasksNewRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/settings'
     | '/reports/history'
     | '/tasks/$taskId'
     | '/tasks/new'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/settings'
     | '/reports/history'
     | '/tasks/$taskId'
     | '/tasks/new'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/settings'
     | '/reports/history'
     | '/tasks/$taskId'
     | '/tasks/new'
@@ -101,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettingsRoute: typeof SettingsRoute
   ReportsHistoryRoute: typeof ReportsHistoryRoute
   TasksTaskIdRoute: typeof TasksTaskIdRoute
   TasksNewRoute: typeof TasksNewRoute
@@ -110,6 +123,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -157,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettingsRoute: SettingsRoute,
   ReportsHistoryRoute: ReportsHistoryRoute,
   TasksTaskIdRoute: TasksTaskIdRoute,
   TasksNewRoute: TasksNewRoute,
