@@ -4,6 +4,7 @@ import { routeTree } from './routeTree.gen'
 import { Toaster } from 'sonner'
 import { useReminder } from './features/notifications'
 import RouteErrorBoundary from './shared/components/RouteErrorBoundary'
+import { usePwaUpdate } from './shared/hooks/usePwaUpdate'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +31,7 @@ declare module '@tanstack/react-router' {
 
 export default function App() {
   useReminder()
+  usePwaUpdate()
 
   return (
     <QueryClientProvider client={queryClient}>

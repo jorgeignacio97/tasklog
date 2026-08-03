@@ -8,6 +8,8 @@ Local-first task and time-tracking app. Log tasks by category, track their statu
 - **Reports** — build a report from unreported tasks in a date range and export it as a PDF (`@react-pdf/renderer`).
 - **History** — browse previously generated reports.
 - **Reminders** — in-app notifications for tasks that have been sitting too long.
+- **Backup** — export/import all local data as JSON from the Settings screen.
+- **Installable & offline** — PWA with a precaching service worker; works fully offline once installed.
 
 ## Stack
 
@@ -16,6 +18,7 @@ Local-first task and time-tracking app. Log tasks by category, track their statu
 - Zustand (UI state), React Hook Form + Zod (forms/validation)
 - Tailwind CSS v4
 - Dexie (IndexedDB) for local persistence
+- vite-plugin-pwa (installable, offline service worker)
 - Vitest + Testing Library for tests
 
 ## Commands
