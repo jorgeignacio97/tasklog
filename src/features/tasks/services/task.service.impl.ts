@@ -1,31 +1,35 @@
-import { db } from '../../../lib/db';
-import type { Task, TaskCategory, Note } from '../../../shared/types';
-import type { TaskService, CreateTaskInput, UpdateTaskInput } from './task.service';
+import { db } from '../../../lib/db'
+import type { Task, TaskCategory, Note } from '../../../shared/types'
+import type {
+  TaskService,
+  CreateTaskInput,
+  UpdateTaskInput,
+} from './task.service'
 
 export class TaskServiceImpl implements TaskService {
   async getAll(): Promise<Task[]> {
-    const entities = await db.tasks.toArray();
-    return this.attachNotesToAll(entities);
+    const entities = await db.tasks.toArray()
+    return this.attachNotesToAll(entities)
   }
 
   async getById(id: string): Promise<Task | undefined> {
-    const entity = await db.tasks.get(id);
-    if (!entity) return undefined;
-    return this.attachNotes(entity);
+    const entity = await db.tasks.get(id)
+    if (!entity) return undefined
+    return this.attachNotes(entity)
   }
 
   async create(data: CreateTaskInput): Promise<Task> {
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
 
-    const { notes, ...rest } = data;
+    const { notes, ...rest } = data
 
     const noteEntities = notes.map((n) => ({
       id: crypto.randomUUID(),
       taskId: id,
       content: n.content,
       createdAt: n.createdAt ?? now,
-    }));
+    }))
 
     await db.transaction('rw', db.tasks, db.taskNotes, async () => {
       await db.tasks.add({
@@ -35,12 +39,12 @@ export class TaskServiceImpl implements TaskService {
         updatedAt: now,
         completedAt: data.completedAt ?? undefined,
         reportedInReportId: data.reportedInReportId ?? undefined,
-      });
+      })
 
       if (noteEntities.length > 0) {
-        await db.taskNotes.bulkAdd(noteEntities);
+        await db.taskNotes.bulkAdd(noteEntities)
       }
-    });
+    })
 
     return {
       ...rest,
@@ -54,28 +58,28 @@ export class TaskServiceImpl implements TaskService {
       updatedAt: now,
       completedAt: data.completedAt ?? undefined,
       reportedInReportId: data.reportedInReportId ?? undefined,
-    };
+    }
   }
 
   async update(id: string, data: UpdateTaskInput): Promise<Task> {
-    const now = new Date().toISOString();
-    const { notes, ...fields } = data;
+    const now = new Date().toISOString()
+    const { notes, ...fields } = data
 
     const updates: Record<string, unknown> = {
       ...fields,
       updatedAt: now,
-    };
+    }
 
     await db.transaction('rw', db.tasks, db.taskNotes, async () => {
-      const existing = await db.tasks.get(id);
+      const existing = await db.tasks.get(id)
       if (!existing) {
-        throw new Error(`Task not found: ${id}`);
+        throw new Error(`Task not found: ${id}`)
       }
 
-      await db.tasks.update(id, updates);
+      await db.tasks.update(id, updates)
 
       if (notes !== undefined) {
-        await db.taskNotes.where('taskId').equals(id).delete();
+        await db.taskNotes.where('taskId').equals(id).delete()
 
         if (notes.length > 0) {
           const noteEntities = notes.map((n) => ({
@@ -83,30 +87,30 @@ export class TaskServiceImpl implements TaskService {
             taskId: id,
             content: n.content,
             createdAt: n.createdAt ?? now,
-          }));
-          await db.taskNotes.bulkAdd(noteEntities);
+          }))
+          await db.taskNotes.bulkAdd(noteEntities)
         }
       }
-    });
+    })
 
-    const updated = await db.tasks.get(id);
+    const updated = await db.tasks.get(id)
     if (!updated) {
-      throw new Error(`Task not found after update: ${id}`);
+      throw new Error(`Task not found after update: ${id}`)
     }
 
-    return this.attachNotes(updated);
+    return this.attachNotes(updated)
   }
 
   async delete(id: string): Promise<void> {
     await db.transaction('rw', db.tasks, db.taskNotes, async () => {
-      await db.taskNotes.where('taskId').equals(id).delete();
-      await db.tasks.delete(id);
-    });
+      await db.taskNotes.where('taskId').equals(id).delete()
+      await db.tasks.delete(id)
+    })
   }
 
   async getByCategory(category: TaskCategory): Promise<Task[]> {
-    const entities = await db.tasks.where('category').equals(category).toArray();
-    return this.attachNotesToAll(entities);
+    const entities = await db.tasks.where('category').equals(category).toArray()
+    return this.attachNotesToAll(entities)
   }
 
   async getUnreportedInRange(start: string, end: string): Promise<Task[]> {
@@ -117,43 +121,38 @@ export class TaskServiceImpl implements TaskService {
           toLocalDateKey(t.createdAt) >= start &&
           toLocalDateKey(t.createdAt) <= end,
       )
-      .toArray();
-    return this.attachNotesToAll(entities);
+      .toArray()
+    return this.attachNotesToAll(entities)
   }
 
   // ── Private helpers ──────────────────────────────────────────
 
-  private async attachNotes(
-    entity: Omit<Task, 'notes'>,
-  ): Promise<Task> {
-    const notes = await db.taskNotes
-      .where('taskId')
-      .equals(entity.id)
-      .toArray();
+  private async attachNotes(entity: Omit<Task, 'notes'>): Promise<Task> {
+    const notes = await db.taskNotes.where('taskId').equals(entity.id).toArray()
     return {
       ...entity,
       notes: notes.map(toNote),
-    };
+    }
   }
 
   private async attachNotesToAll(
     entities: Omit<Task, 'notes'>[],
   ): Promise<Task[]> {
-    if (entities.length === 0) return [];
-    return Promise.all(entities.map((e) => this.attachNotes(e)));
+    if (entities.length === 0) return []
+    return Promise.all(entities.map((e) => this.attachNotes(e)))
   }
 }
 
 function toNote(tn: { id: string; content: string; createdAt: string }): Note {
-  return { id: tn.id, content: tn.content, createdAt: tn.createdAt };
+  return { id: tn.id, content: tn.content, createdAt: tn.createdAt }
 }
 
 // Compares createdAt (a full ISO timestamp) against bare "YYYY-MM-DD" range
 // bounds from a date input; both sides must use the same local-calendar-day key.
 function toLocalDateKey(iso: string): string {
-  const d = new Date(iso);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  const d = new Date(iso)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }

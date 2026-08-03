@@ -58,7 +58,8 @@ export function useReminder(now: () => Date = defaultNow) {
 
         // Sort by createdAt descending
         const sorted = [...tasks].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         )
         const latest = sorted[0]
 

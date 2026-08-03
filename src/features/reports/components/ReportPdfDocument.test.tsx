@@ -14,16 +14,21 @@ import type { Report, Task } from '../../../shared/types'
 
 function flattenChildren(node: unknown): unknown[] {
   if (Array.isArray(node)) return node.flatMap(flattenChildren)
-  if (node === null || node === undefined || typeof node === 'boolean') return []
+  if (node === null || node === undefined || typeof node === 'boolean')
+    return []
   return [node]
 }
 
 function collectText(node: unknown): string[] {
-  if (node === null || node === undefined || typeof node === 'boolean') return []
+  if (node === null || node === undefined || typeof node === 'boolean')
+    return []
   if (typeof node === 'string') return [node]
   if (typeof node === 'number') return [String(node)]
   if (Array.isArray(node)) return node.flatMap(collectText)
-  if (typeof node === 'object' && 'props' in (node as Record<string, unknown>)) {
+  if (
+    typeof node === 'object' &&
+    'props' in (node as Record<string, unknown>)
+  ) {
     const props = (node as { props?: { children?: unknown } }).props
     return collectText(props?.children)
   }
@@ -91,7 +96,9 @@ describe('ReportPdfDocument (RPD-1)', () => {
       `${formatDate(report.startDate)} - ${formatDate(report.endDate)}`,
     )
 
-    const summaryItems = flattenChildren(pageChildren[2].props.children) as Array<{
+    const summaryItems = flattenChildren(
+      pageChildren[2].props.children,
+    ) as Array<{
       props: { children: unknown }
     }>
     expect(summaryItems).toHaveLength(3)
@@ -172,7 +179,9 @@ describe('ReportPdfDocument (RPD-1)', () => {
       }
     }).not.toThrow()
 
-    const pageEl = documentEl!.props.children as { props: { children: unknown } }
+    const pageEl = documentEl!.props.children as {
+      props: { children: unknown }
+    }
     const pageChildren = flattenChildren(pageEl.props.children) as Array<{
       props: { children: unknown }
     }>

@@ -199,9 +199,7 @@ describe('useReports hooks (RHK-1..4)', () => {
     taskServiceMock.update.mockRejectedValue(new Error('link failed'))
     reportServiceMock.getAll.mockResolvedValue([])
     taskServiceMock.getAll.mockResolvedValue([])
-    reportServiceMock.getById.mockResolvedValue(
-      makeReport({ id: 'r-1' }),
-    )
+    reportServiceMock.getById.mockResolvedValue(makeReport({ id: 'r-1' }))
 
     const { result } = renderHookWithProviders(() => {
       useReports()
@@ -213,7 +211,9 @@ describe('useReports hooks (RHK-1..4)', () => {
       expect(reportServiceMock.getAll).toHaveBeenCalledTimes(1),
     )
     await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(1))
+    await waitFor(() =>
+      expect(reportServiceMock.getById).toHaveBeenCalledTimes(1),
+    )
 
     await expect(
       result.current.mutateAsync({
@@ -226,7 +226,9 @@ describe('useReports hooks (RHK-1..4)', () => {
       }),
     ).rejects.toThrow('link failed')
 
-    expect(sonnerToast.error).toHaveBeenCalledWith('No se pudo crear el reporte')
+    expect(sonnerToast.error).toHaveBeenCalledWith(
+      'No se pudo crear el reporte',
+    )
     expect(reportServiceMock.create).toHaveBeenCalledTimes(1)
     // No invalidation: mounted query call counts unchanged inside waitFor
     // settle windows — a spurious refetch would fail these deterministically.
@@ -234,7 +236,9 @@ describe('useReports hooks (RHK-1..4)', () => {
       expect(reportServiceMock.getAll).toHaveBeenCalledTimes(1),
     )
     await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(1))
+    await waitFor(() =>
+      expect(reportServiceMock.getById).toHaveBeenCalledTimes(1),
+    )
   })
 
   it('RHK-3 Happy: useUpdateReport invalidates the report and its list; detail-key refetch proven', async () => {
@@ -252,7 +256,9 @@ describe('useReports hooks (RHK-1..4)', () => {
     await waitFor(() =>
       expect(reportServiceMock.getAll).toHaveBeenCalledTimes(1),
     )
-    await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(1))
+    await waitFor(() =>
+      expect(reportServiceMock.getById).toHaveBeenCalledTimes(1),
+    )
 
     await result.current.mutateAsync({ id: 'r-1', data: { status: 'sent' } })
 
@@ -267,7 +273,9 @@ describe('useReports hooks (RHK-1..4)', () => {
     // same synchronous block → getById fires 1 → 3 atomically (NOT 2).
     // 3 (not 2) is a known, accepted inefficiency from the two overlapping
     // invalidateQueries calls in useUpdateReport — not a bug to "fix".
-    await waitFor(() => expect(reportServiceMock.getById).toHaveBeenCalledTimes(3))
+    await waitFor(() =>
+      expect(reportServiceMock.getById).toHaveBeenCalledTimes(3),
+    )
     expect(sonnerToast.success).toHaveBeenCalledWith('Reporte actualizado')
   })
 

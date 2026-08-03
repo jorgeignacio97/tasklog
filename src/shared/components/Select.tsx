@@ -14,13 +14,25 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   ref?: Ref<HTMLSelectElement>
 }
 
-export function Select({ label, error, options, placeholder, className, id, ref, ...props }: SelectProps) {
+export function Select({
+  label,
+  error,
+  options,
+  placeholder,
+  className,
+  id,
+  ref,
+  ...props
+}: SelectProps) {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, '-')
 
   return (
     <div className="space-y-1">
       {label && (
-        <label htmlFor={selectId} className="block text-sm font-medium text-zinc-300">
+        <label
+          htmlFor={selectId}
+          className="block text-sm font-medium text-zinc-300"
+        >
           {label}
         </label>
       )}

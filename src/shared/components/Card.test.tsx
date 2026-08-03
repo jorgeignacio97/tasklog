@@ -4,10 +4,7 @@ import Card from './Card'
 describe('Card (SC-2)', () => {
   it('SC-2 Happy: renders header, children, and footer in order', () => {
     const { container } = renderWithProviders(
-      <Card
-        header={<h2>Header</h2>}
-        footer={<footer>Footer</footer>}
-      >
+      <Card header={<h2>Header</h2>} footer={<footer>Footer</footer>}>
         Body
       </Card>,
     )

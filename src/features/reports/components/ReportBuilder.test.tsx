@@ -72,9 +72,7 @@ async function setDateRange() {
 // Waits until the preview query has resolved (loading placeholder gone).
 async function waitForPreviewData() {
   await waitFor(() =>
-    expect(
-      screen.queryByText('Cargando tareas…'),
-    ).not.toBeInTheDocument(),
+    expect(screen.queryByText('Cargando tareas…')).not.toBeInTheDocument(),
   )
 }
 

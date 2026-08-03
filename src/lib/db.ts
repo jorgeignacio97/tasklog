@@ -1,11 +1,11 @@
-import Dexie, { type EntityTable } from 'dexie';
-import type { Task, Report } from '../shared/types';
+import Dexie, { type EntityTable } from 'dexie'
+import type { Task, Report } from '../shared/types'
 
 export interface TaskNoteDexie {
-  id: string;
-  taskId: string;
-  content: string;
-  createdAt: string;
+  id: string
+  taskId: string
+  content: string
+  createdAt: string
 }
 
 /**
@@ -17,19 +17,19 @@ export interface TaskNoteDexie {
  * `taskNotes` stores individual note rows linked to their parent task.
  */
 export class TaskLogDB extends Dexie {
-  tasks!: EntityTable<Omit<Task, 'notes'>, 'id'>;
-  reports!: EntityTable<Report, 'id'>;
-  taskNotes!: EntityTable<TaskNoteDexie, 'id'>;
+  tasks!: EntityTable<Omit<Task, 'notes'>, 'id'>
+  reports!: EntityTable<Report, 'id'>
+  taskNotes!: EntityTable<TaskNoteDexie, 'id'>
 
   constructor() {
-    super('TaskLogDB');
+    super('TaskLogDB')
 
     this.version(1).stores({
       tasks: 'id, [category+status], createdAt, reportedInReportId',
       reports: 'id, createdAt',
       taskNotes: 'id, taskId',
-    });
+    })
   }
 }
 
-export const db = new TaskLogDB();
+export const db = new TaskLogDB()

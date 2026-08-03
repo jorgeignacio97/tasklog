@@ -93,7 +93,9 @@ export function ReportPdfDocument({ report, tasks }: ReportPdfDocumentProps) {
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Estado</Text>
-            <Text style={styles.summaryValue}>{badgeLabels[report.status]}</Text>
+            <Text style={styles.summaryValue}>
+              {badgeLabels[report.status]}
+            </Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Tareas</Text>
@@ -101,7 +103,9 @@ export function ReportPdfDocument({ report, tasks }: ReportPdfDocumentProps) {
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>Horas totales</Text>
-            <Text style={styles.summaryValue}>{formatDuration(report.totalHours)}</Text>
+            <Text style={styles.summaryValue}>
+              {formatDuration(report.totalHours)}
+            </Text>
           </View>
         </View>
 
@@ -111,9 +115,13 @@ export function ReportPdfDocument({ report, tasks }: ReportPdfDocumentProps) {
           <View style={styles.table}>
             <View style={styles.tableHeaderRow}>
               <Text style={[styles.headerCell, styles.colTitle]}>Tarea</Text>
-              <Text style={[styles.headerCell, styles.colCategory]}>Categoría</Text>
+              <Text style={[styles.headerCell, styles.colCategory]}>
+                Categoría
+              </Text>
               <Text style={[styles.headerCell, styles.colStatus]}>Estado</Text>
-              <Text style={[styles.headerCell, styles.colDuration]}>Duración</Text>
+              <Text style={[styles.headerCell, styles.colDuration]}>
+                Duración
+              </Text>
             </View>
             {tasks.map((task) => (
               <View key={task.id} style={styles.tableRow}>

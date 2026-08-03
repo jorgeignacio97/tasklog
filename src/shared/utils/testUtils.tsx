@@ -77,7 +77,9 @@ function createHarness(opts?: HarnessOptions) {
   function Wrapper({ children }: { children: ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <RouterContextProvider router={router}>{children}</RouterContextProvider>
+        <RouterContextProvider router={router}>
+          {children}
+        </RouterContextProvider>
       </QueryClientProvider>
     )
   }

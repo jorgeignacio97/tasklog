@@ -34,7 +34,11 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     status: 'en-curso',
     estimatedDuration: 3,
     notes: [
-      { id: 'n-1', content: 'nota original', createdAt: '2026-07-01T12:00:00.000Z' },
+      {
+        id: 'n-1',
+        content: 'nota original',
+        createdAt: '2026-07-01T12:00:00.000Z',
+      },
     ],
     createdAt: '2026-07-01T12:00:00.000Z',
     updatedAt: '2026-07-01T12:00:00.000Z',
@@ -106,9 +110,7 @@ describe('TaskForm (TC-1)', () => {
         notes: [],
       }),
     )
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe('/tasks'),
-    )
+    await waitFor(() => expect(router.state.location.pathname).toBe('/tasks'))
   })
 
   it('TC-1 Happy: edit mode prefills from getById and updates on submit', async () => {
@@ -127,9 +129,7 @@ describe('TaskForm (TC-1)', () => {
     const user = userEvent.setup()
     await user.clear(screen.getByLabelText('Título'))
     await user.type(screen.getByLabelText('Título'), 'Edited title')
-    await user.click(
-      screen.getByRole('button', { name: 'Actualizar tarea' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Actualizar tarea' }))
 
     await waitFor(() =>
       expect(taskServiceMock.update).toHaveBeenCalledWith(
@@ -143,9 +143,7 @@ describe('TaskForm (TC-1)', () => {
         }),
       ),
     )
-    await waitFor(() =>
-      expect(router.state.location.pathname).toBe('/tasks'),
-    )
+    await waitFor(() => expect(router.state.location.pathname).toBe('/tasks'))
   })
 
   it('TC-1 Happy: notes can be added and deleted before submit', async () => {

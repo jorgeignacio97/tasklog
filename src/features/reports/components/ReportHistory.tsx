@@ -4,7 +4,11 @@ import { FileText, Trash2 } from 'lucide-react'
 import { Button } from '../../../shared/components/Button'
 import Modal from '../../../shared/components/Modal'
 import { ReportListItem } from './ReportListItem'
-import { useReports, useUpdateReport, useDeleteReport } from '../hooks/useReports'
+import {
+  useReports,
+  useUpdateReport,
+  useDeleteReport,
+} from '../hooks/useReports'
 import type { Report } from '../../../shared/types'
 
 export default function ReportHistory() {
@@ -18,7 +22,10 @@ export default function ReportHistory() {
   } | null>(null)
 
   const handleMarkSent = (id: string) => {
-    updateReport.mutate({ id, data: { status: 'sent', sentAt: new Date().toISOString() } })
+    updateReport.mutate({
+      id,
+      data: { status: 'sent', sentAt: new Date().toISOString() },
+    })
   }
 
   const handleDeleteConfirm = () => {
@@ -32,7 +39,9 @@ export default function ReportHistory() {
   if (isLoading) {
     return (
       <div className="p-4 max-w-3xl mx-auto">
-        <h1 className="text-xl font-semibold text-zinc-100 mb-6">Historial de reportes</h1>
+        <h1 className="text-xl font-semibold text-zinc-100 mb-6">
+          Historial de reportes
+        </h1>
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div
@@ -49,7 +58,9 @@ export default function ReportHistory() {
   if (!reports || reports.length === 0) {
     return (
       <div className="p-4 max-w-3xl mx-auto">
-        <h1 className="text-xl font-semibold text-zinc-100 mb-6">Historial de reportes</h1>
+        <h1 className="text-xl font-semibold text-zinc-100 mb-6">
+          Historial de reportes
+        </h1>
         <div className="text-center py-16 text-zinc-500">
           <FileText size={48} className="mx-auto mb-4 opacity-50" />
           <p className="text-lg font-medium mb-1">Todavía no hay reportes</p>
@@ -71,7 +82,9 @@ export default function ReportHistory() {
   return (
     <div className="p-4 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-zinc-100">Historial de reportes</h1>
+        <h1 className="text-xl font-semibold text-zinc-100">
+          Historial de reportes
+        </h1>
         <Link to="/reports">
           <Button variant="secondary" size="sm">
             <FileText size={14} />
@@ -86,7 +99,9 @@ export default function ReportHistory() {
             key={report.id}
             report={report}
             onMarkSent={handleMarkSent}
-            onDelete={(r: Report) => setDeleteTarget({ id: r.id, status: r.status })}
+            onDelete={(r: Report) =>
+              setDeleteTarget({ id: r.id, status: r.status })
+            }
             isMarkingSent={updateReport.isPending}
             isDeleting={deleteReport.isPending}
           />
@@ -104,7 +119,9 @@ export default function ReportHistory() {
             ? 'Este reporte ya fue marcado como enviado. Las tareas volverán a estar disponibles para reportar.'
             : 'Las tareas vinculadas a este reporte volverán a estar disponibles para reportar.'}
         </p>
-        <p className="text-sm text-zinc-500 mb-6">Esta acción no se puede deshacer.</p>
+        <p className="text-sm text-zinc-500 mb-6">
+          Esta acción no se puede deshacer.
+        </p>
         <div className="flex justify-end gap-3">
           <Button
             variant="secondary"

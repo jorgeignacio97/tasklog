@@ -137,9 +137,7 @@ describe('TaskList (TC-2)', () => {
     renderWithProviders(<TaskList />)
 
     await waitFor(() =>
-      expect(
-        screen.getByText('Todavía no hay tareas'),
-      ).toBeInTheDocument(),
+      expect(screen.getByText('Todavía no hay tareas')).toBeInTheDocument(),
     )
   })
 
@@ -170,9 +168,7 @@ describe('TaskList (TC-2)', () => {
       expect(screen.getByText('Alpha bug')).toBeInTheDocument(),
     )
 
-    fireEvent.click(
-      screen.getByTitle('Estado: pendiente. Clic para cambiar.'),
-    )
+    fireEvent.click(screen.getByTitle('Estado: pendiente. Clic para cambiar.'))
     await waitFor(() =>
       expect(taskServiceMock.update).toHaveBeenCalledWith('t-2', {
         status: 'en-curso',

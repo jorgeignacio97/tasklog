@@ -10,7 +10,9 @@ resetDbBeforeEach()
 const reportService = new ReportServiceImpl()
 const taskService = new TaskServiceImpl()
 
-function makeReportInput(overrides: Partial<CreateReportInput> = {}): CreateReportInput {
+function makeReportInput(
+  overrides: Partial<CreateReportInput> = {},
+): CreateReportInput {
   return {
     startDate: '2026-03-01',
     endDate: '2026-03-31',
@@ -21,7 +23,9 @@ function makeReportInput(overrides: Partial<CreateReportInput> = {}): CreateRepo
   }
 }
 
-function makeTaskInput(overrides: Partial<CreateTaskInput> = {}): CreateTaskInput {
+function makeTaskInput(
+  overrides: Partial<CreateTaskInput> = {},
+): CreateTaskInput {
   return {
     title: 'Sample task',
     category: 'frontend',
@@ -35,7 +39,9 @@ function makeTaskInput(overrides: Partial<CreateTaskInput> = {}): CreateTaskInpu
 describe('ReportServiceImpl', () => {
   describe('create + getById (RS-7)', () => {
     it('persists the report so getById immediately returns it', async () => {
-      const created = await reportService.create(makeReportInput({ totalHours: 5 }))
+      const created = await reportService.create(
+        makeReportInput({ totalHours: 5 }),
+      )
 
       const fetched = await reportService.getById(created.id)
       expect(fetched?.id).toBe(created.id)
@@ -45,9 +51,15 @@ describe('ReportServiceImpl', () => {
 
   describe('getAll (RS-8)', () => {
     it('returns every report created', async () => {
-      await reportService.create(makeReportInput({ startDate: '2026-01-01', endDate: '2026-01-31' }))
-      await reportService.create(makeReportInput({ startDate: '2026-02-01', endDate: '2026-02-28' }))
-      await reportService.create(makeReportInput({ startDate: '2026-03-01', endDate: '2026-03-31' }))
+      await reportService.create(
+        makeReportInput({ startDate: '2026-01-01', endDate: '2026-01-31' }),
+      )
+      await reportService.create(
+        makeReportInput({ startDate: '2026-02-01', endDate: '2026-02-28' }),
+      )
+      await reportService.create(
+        makeReportInput({ startDate: '2026-03-01', endDate: '2026-03-31' }),
+      )
 
       const all = await reportService.getAll()
       expect(all).toHaveLength(3)
@@ -85,7 +97,10 @@ describe('ReportServiceImpl', () => {
         makeReportInput({ startDate: '2026-04-01', endDate: '2026-04-30' }),
       )
       const otherTask = await taskService.create(
-        makeTaskInput({ title: 'Other report task', reportedInReportId: otherReport.id }),
+        makeTaskInput({
+          title: 'Other report task',
+          reportedInReportId: otherReport.id,
+        }),
       )
 
       await reportService.delete(report.id)
@@ -102,7 +117,13 @@ describe('ReportServiceImpl', () => {
         makeTaskInput({
           title: 'Linked with notes',
           reportedInReportId: report.id,
-          notes: [{ id: 'n1', content: 'note one', createdAt: '2020-01-01T00:00:00.000Z' }],
+          notes: [
+            {
+              id: 'n1',
+              content: 'note one',
+              createdAt: '2020-01-01T00:00:00.000Z',
+            },
+          ],
         }),
       )
       await taskService.create(makeTaskInput({ title: 'Not linked' }))
@@ -117,24 +138,33 @@ describe('ReportServiceImpl', () => {
     it('RS-4: returns [] without throwing when the report has zero linked tasks', async () => {
       const report = await reportService.create(makeReportInput())
 
-      await expect(reportService.getTasksForReport(report.id)).resolves.toEqual([])
+      await expect(reportService.getTasksForReport(report.id)).resolves.toEqual(
+        [],
+      )
     })
   })
 
   describe('update on non-existent id (RS-5)', () => {
     it('throws rather than silently no-oping', async () => {
-      await expect(reportService.update('missing-id', { totalHours: 1 })).rejects.toThrow(
-        'Report not found: missing-id',
-      )
+      await expect(
+        reportService.update('missing-id', { totalHours: 1 }),
+      ).rejects.toThrow('Report not found: missing-id')
     })
   })
 
   describe('update happy path (RS-10)', () => {
     it('persists the new field values and bumps updatedAt', async () => {
-      const created = await reportService.create(makeReportInput({ status: 'draft', totalHours: 5 }))
-      await db.reports.update(created.id, { updatedAt: '2020-01-01T00:00:00.000Z' })
+      const created = await reportService.create(
+        makeReportInput({ status: 'draft', totalHours: 5 }),
+      )
+      await db.reports.update(created.id, {
+        updatedAt: '2020-01-01T00:00:00.000Z',
+      })
 
-      const updated = await reportService.update(created.id, { status: 'sent', totalHours: 8 })
+      const updated = await reportService.update(created.id, {
+        status: 'sent',
+        totalHours: 8,
+      })
 
       expect(updated.status).toBe('sent')
       expect(updated.totalHours).toBe(8)
@@ -157,7 +187,9 @@ describe('ReportServiceImpl', () => {
         makeTaskInput({ title: 'Linked task', reportedInReportId: report.id }),
       )
 
-      vi.spyOn(db.reports, 'delete').mockRejectedValueOnce(new Error('simulated failure'))
+      vi.spyOn(db.reports, 'delete').mockRejectedValueOnce(
+        new Error('simulated failure'),
+      )
 
       await expect(reportService.delete(report.id)).rejects.toThrow()
 

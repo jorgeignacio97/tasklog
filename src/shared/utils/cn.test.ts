@@ -4,12 +4,27 @@ describe('formatDuration', () => {
   it.each([
     { hours: 0, expected: '0m', label: 'FMT-1 zero hours' },
     { hours: 1.5, expected: '1h 30m', label: 'FMT-2 hours and minutes' },
-    { hours: 2, expected: '2h', label: 'FMT-3 whole hours, minutes round to 0' },
-    { hours: 0.999, expected: '1h', label: 'FMT-4 rounds up into the next hour' },
-    { hours: 1.999, expected: '2h', label: 'FMT-4 rounds up into the next hour (>1h)' },
-  ])('$label: formatDuration($hours) === "$expected"', ({ hours, expected }) => {
-    expect(formatDuration(hours)).toBe(expected)
-  })
+    {
+      hours: 2,
+      expected: '2h',
+      label: 'FMT-3 whole hours, minutes round to 0',
+    },
+    {
+      hours: 0.999,
+      expected: '1h',
+      label: 'FMT-4 rounds up into the next hour',
+    },
+    {
+      hours: 1.999,
+      expected: '2h',
+      label: 'FMT-4 rounds up into the next hour (>1h)',
+    },
+  ])(
+    '$label: formatDuration($hours) === "$expected"',
+    ({ hours, expected }) => {
+      expect(formatDuration(hours)).toBe(expected)
+    },
+  )
 
   it('FMT-8: clamps negative or NaN hours to 0m instead of throwing or returning garbage', () => {
     expect(formatDuration(-5)).toBe('0m')

@@ -8,7 +8,13 @@ import { formatDuration, formatDate } from '../../../shared/utils/cn'
 import { useUnreportedTasks, useCreateReport } from '../hooks/useReports'
 import type { Task, TaskCategory } from '../../../shared/types'
 
-const categoryOrder: TaskCategory[] = ['frontend', 'backend', 'bug', 'review', 'other']
+const categoryOrder: TaskCategory[] = [
+  'frontend',
+  'backend',
+  'bug',
+  'review',
+  'other',
+]
 
 // ── Summary cards (module scope: stable identity across renders — RB-1) ──
 
@@ -36,7 +42,7 @@ function SummaryCards({
           <FileText className="text-indigo-400" size={20} />
           <div>
             <p className="text-2xl font-bold text-zinc-100">
-              {isLoadingPreview ? '…' : unreportedTasks?.length ?? 0}
+              {isLoadingPreview ? '…' : (unreportedTasks?.length ?? 0)}
             </p>
             <p className="text-xs text-zinc-400">Total tareas</p>
           </div>
@@ -91,7 +97,10 @@ function PreviewArea({
     return (
       <div className="text-center py-16 text-zinc-500">
         <Eye size={40} className="mx-auto mb-3 opacity-50" />
-        <p>Selecciona un rango de fechas y haz clic en Vista previa para ver las tareas no reportadas.</p>
+        <p>
+          Selecciona un rango de fechas y haz clic en Vista previa para ver las
+          tareas no reportadas.
+        </p>
       </div>
     )
   }
@@ -141,7 +150,10 @@ function PreviewArea({
                   : firstNote?.content
 
               return (
-                <Card key={task.id} className="flex items-start justify-between gap-4">
+                <Card
+                  key={task.id}
+                  className="flex items-start justify-between gap-4"
+                >
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-zinc-100 truncate">
                       {task.title}
@@ -177,10 +189,11 @@ export default function ReportBuilder() {
   const navigate = useNavigate()
   const createReport = useCreateReport()
 
-  const { data: unreportedTasks, isLoading: isLoadingPreview } = useUnreportedTasks(
-    showPreview ? startDate : undefined,
-    showPreview ? endDate : undefined,
-  )
+  const { data: unreportedTasks, isLoading: isLoadingPreview } =
+    useUnreportedTasks(
+      showPreview ? startDate : undefined,
+      showPreview ? endDate : undefined,
+    )
 
   const tasksByCategory = (() => {
     if (!unreportedTasks) return new Map<TaskCategory, Task[]>()
@@ -192,7 +205,8 @@ export default function ReportBuilder() {
     return map
   })()
 
-  const totalHours = unreportedTasks?.reduce((sum, t) => sum + t.estimatedDuration, 0) ?? 0
+  const totalHours =
+    unreportedTasks?.reduce((sum, t) => sum + t.estimatedDuration, 0) ?? 0
 
   const categoryCount = tasksByCategory.size
 
@@ -224,7 +238,9 @@ export default function ReportBuilder() {
   // ── Main render ──────────────────────────────────────────
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <h1 className="text-xl font-semibold text-zinc-100 mb-6">Generar reporte</h1>
+      <h1 className="text-xl font-semibold text-zinc-100 mb-6">
+        Generar reporte
+      </h1>
 
       {/* Date range inputs */}
       <Card className="mb-6">

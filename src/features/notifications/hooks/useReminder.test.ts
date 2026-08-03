@@ -101,9 +101,7 @@ describe('useReminder (RM-1..5)', () => {
 
     renderHookWithProviders(() => useReminder(fixedNow))
 
-    await waitFor(() =>
-      expect(FakeNotification.instances).toHaveLength(2),
-    )
+    await waitFor(() => expect(FakeNotification.instances).toHaveLength(2))
 
     // Effect-body site: monthStart/monthEnd derived from the injected clock
     expect(taskServiceMock.getUnreportedInRange).toHaveBeenCalledWith(
@@ -156,12 +154,8 @@ describe('useReminder (RM-1..5)', () => {
 
     renderHookWithProviders(() => useReminder(fixedNow))
 
-    await waitFor(() =>
-      expect(FakeNotification.instances).toHaveLength(1),
-    )
-    expect(FakeNotification.instances[0].title).toBe(
-      'TaskLog — Inactividad',
-    )
+    await waitFor(() => expect(FakeNotification.instances).toHaveLength(1))
+    expect(FakeNotification.instances[0].title).toBe('TaskLog — Inactividad')
     expect(FakeNotification.instances[0].options?.body).toBe(
       'Hace 3 días que no registras tareas. ¡Registra algo nuevo!',
     )
@@ -173,9 +167,7 @@ describe('useReminder (RM-1..5)', () => {
 
     renderHookWithProviders(() => useReminder(fixedNow))
 
-    await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1),
-    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
     expect(FakeNotification.instances).toHaveLength(0)
     expect(localStorage.getItem(REMINDER_INACTIVE_KEY)).toBeNull()
   })
@@ -187,9 +179,7 @@ describe('useReminder (RM-1..5)', () => {
 
     renderHookWithProviders(() => useReminder(fixedNow))
 
-    await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1),
-    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
     expect(FakeNotification.instances).toHaveLength(0)
     expect(localStorage.getItem(REMINDER_INACTIVE_KEY)).toBeNull()
   })
@@ -205,9 +195,7 @@ describe('useReminder (RM-1..5)', () => {
 
     renderHookWithProviders(() => useReminder(fixedNow))
 
-    await waitFor(() =>
-      expect(FakeNotification.instances).toHaveLength(2),
-    )
+    await waitFor(() => expect(FakeNotification.instances).toHaveLength(2))
     const monthEnd = FakeNotification.instances.find(
       (n) => n.title === 'TaskLog — Tareas sin reportar',
     )

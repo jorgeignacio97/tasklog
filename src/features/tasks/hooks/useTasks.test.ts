@@ -126,9 +126,7 @@ describe('useTasks hooks (THK-1..3)', () => {
       useTasks()
       return useCreateTask()
     })
-    await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1),
-    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
 
     await result.current.mutateAsync({
       title: 'New task',
@@ -148,9 +146,7 @@ describe('useTasks hooks (THK-1..3)', () => {
     })
 
     // Invalidation triggers a refetch of the active useTasks query
-    await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2),
-    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2))
     expect(sonnerToast.success).toHaveBeenCalledWith('Tarea creada')
   })
 
@@ -162,9 +158,7 @@ describe('useTasks hooks (THK-1..3)', () => {
       useTasks()
       return useCreateTask()
     })
-    await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1),
-    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
 
     await expect(
       result.current.mutateAsync({
@@ -196,10 +190,10 @@ describe('useTasks hooks (THK-1..3)', () => {
       useTask('t-1')
       return useUpdateTask()
     })
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
     await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1),
+      expect(taskServiceMock.getById).toHaveBeenCalledTimes(1),
     )
-    await waitFor(() => expect(taskServiceMock.getById).toHaveBeenCalledTimes(1))
 
     await result.current.mutateAsync({
       id: 't-1',
@@ -209,15 +203,15 @@ describe('useTasks hooks (THK-1..3)', () => {
     expect(taskServiceMock.update).toHaveBeenCalledWith('t-1', {
       title: 'Renamed',
     })
-    await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2),
-    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2))
     // Detail-key refetch proven at runtime: invalidating ['tasks','t-1']
     // (exact) AND ['tasks'] (prefix) both match the detail observer in the
     // same synchronous block → getById fires 1 → 3 atomically (NOT 2).
     // 3 (not 2) is a known, accepted inefficiency from the two overlapping
     // invalidateQueries calls in useUpdateTask — not a bug to "fix".
-    await waitFor(() => expect(taskServiceMock.getById).toHaveBeenCalledTimes(3))
+    await waitFor(() =>
+      expect(taskServiceMock.getById).toHaveBeenCalledTimes(3),
+    )
     expect(sonnerToast.success).toHaveBeenCalledWith('Tarea actualizada')
   })
 
@@ -229,16 +223,12 @@ describe('useTasks hooks (THK-1..3)', () => {
       useTasks()
       return useDeleteTask()
     })
-    await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1),
-    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(1))
 
     await result.current.mutateAsync('t-1')
 
     expect(taskServiceMock.delete).toHaveBeenCalledWith('t-1')
-    await waitFor(() =>
-      expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2),
-    )
+    await waitFor(() => expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2))
     expect(sonnerToast.success).toHaveBeenCalledWith('Tarea eliminada')
   })
 })

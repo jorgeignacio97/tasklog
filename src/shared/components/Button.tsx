@@ -47,7 +47,12 @@ export function Button({
       )}
       {...props}
     >
-      {isLoading && <Loader2 size={size === 'sm' ? 14 : size === 'lg' ? 20 : 16} className="animate-spin" />}
+      {isLoading && (
+        <Loader2
+          size={size === 'sm' ? 14 : size === 'lg' ? 20 : 16}
+          className="animate-spin"
+        />
+      )}
       {children}
     </button>
   )

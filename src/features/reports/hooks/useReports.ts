@@ -2,7 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { taskService, reportService } from '../../../lib/services'
 import type { Task, Report } from '../../../shared/types'
-import type { CreateReportInput, UpdateReportInput } from '../services/report.service'
+import type {
+  CreateReportInput,
+  UpdateReportInput,
+} from '../services/report.service'
 
 export function useReports() {
   return useQuery<Report[]>({

@@ -84,11 +84,13 @@ describe('ReportListItem PDF download (RLI-1)', () => {
     vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url')
     vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
-    vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {
-      const el = originalCreateElement(tagName)
-      if (tagName === 'a') capturedAnchor = el as HTMLAnchorElement
-      return el
-    })
+    vi.spyOn(document, 'createElement').mockImplementation(
+      (tagName: string) => {
+        const el = originalCreateElement(tagName)
+        if (tagName === 'a') capturedAnchor = el as HTMLAnchorElement
+        return el
+      },
+    )
   })
 
   it('RLI-1 Happy: clicking download fetches tasks, generates the PDF, and attaches the blob URL to the anchor', async () => {

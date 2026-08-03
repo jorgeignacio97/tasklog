@@ -13,11 +13,18 @@ import AppShell from '../layout/AppShell'
 describe('RouteErrorBoundary', () => {
   it('renders the fallback with the error message and a retry button', () => {
     const reset = vi.fn()
-    render(<RouteErrorBoundary error={new Error('Fallo al cargar la tarea')} reset={reset} />)
+    render(
+      <RouteErrorBoundary
+        error={new Error('Fallo al cargar la tarea')}
+        reset={reset}
+      />,
+    )
 
     expect(screen.getByText('Algo salió mal')).toBeInTheDocument()
     expect(screen.getByText('Fallo al cargar la tarea')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Reintentar' }),
+    ).toBeInTheDocument()
   })
 
   it('calls reset when the retry button is clicked', () => {
@@ -30,7 +37,9 @@ describe('RouteErrorBoundary', () => {
   })
 
   it('falls back to a generic message when the thrown value is not an Error', () => {
-    render(<RouteErrorBoundary error={'not an Error instance'} reset={vi.fn()} />)
+    render(
+      <RouteErrorBoundary error={'not an Error instance'} reset={vi.fn()} />,
+    )
 
     expect(screen.getByText('Ocurrió un error inesperado.')).toBeInTheDocument()
   })
