@@ -1,6 +1,5 @@
 import { waitFor } from '@testing-library/react'
 import { renderHookWithProviders } from '../../../shared/utils/testUtils'
-import type { TaskCategory } from '../../../shared/types'
 import type { CreateTaskInput } from '../services/task.service'
 import {
   useTasks,
@@ -8,7 +7,6 @@ import {
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
-  useTasksByCategory,
 } from './useTasks'
 
 const taskServiceMock = vi.hoisted(() => ({
@@ -86,36 +84,12 @@ describe('useTasks hooks (THK-1..3)', () => {
     expect(taskServiceMock.getById).not.toHaveBeenCalled()
   })
 
-  it('THK-2 Happy: useTask(id) fetches by id; useTasksByCategory keys queries by category', async () => {
+  it('THK-2 Happy: useTask(id) fetches by id', async () => {
     taskServiceMock.getById.mockResolvedValue(makeTask({ id: 't-1' }))
-    taskServiceMock.getByCategory.mockResolvedValue([
-      makeTask({ id: 't-1', category: 'bug', title: 'Bug one' }),
-    ])
 
     const taskResult = renderHookWithProviders(() => useTask('t-1'))
     await waitFor(() => expect(taskResult.result.current.data?.id).toBe('t-1'))
     expect(taskServiceMock.getById).toHaveBeenCalledWith('t-1')
-
-    let category: TaskCategory = 'bug'
-    const categoryResult = renderHookWithProviders(() =>
-      useTasksByCategory(category),
-    )
-    await waitFor(() =>
-      expect(categoryResult.result.current.data).toHaveLength(1),
-    )
-    expect(categoryResult.result.current.data?.[0].title).toBe('Bug one')
-
-    category = 'frontend'
-    categoryResult.rerender()
-    await waitFor(() =>
-      expect(taskServiceMock.getByCategory).toHaveBeenLastCalledWith(
-        'frontend',
-      ),
-    )
-    expect(taskServiceMock.getByCategory.mock.calls.map((c) => c[0])).toEqual([
-      'bug',
-      'frontend',
-    ])
   })
 
   it('THK-3 Happy: useCreateTask invalidates tasks and toasts success', async () => {

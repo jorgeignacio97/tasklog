@@ -1,12 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { taskService } from '../../../lib/services'
-import type { Task, TaskCategory } from '../../../shared/types'
+import type { Task } from '../../../shared/types'
 import type { CreateTaskInput, UpdateTaskInput } from '../services/task.service'
+
+export const taskKeys = {
+  all: ['tasks'] as const,
+  detail: (id: string) => ['tasks', id] as const,
+  unreported: (start: string, end: string) =>
+    ['tasks', 'unreported', start, end] as const,
+}
 
 export function useTasks() {
   return useQuery<Task[]>({
-    queryKey: ['tasks'],
+    queryKey: taskKeys.all,
     queryFn: () => taskService.getAll(),
     staleTime: Infinity,
   })
@@ -14,7 +21,7 @@ export function useTasks() {
 
 export function useTask(id: string | undefined) {
   return useQuery<Task | undefined>({
-    queryKey: ['tasks', id],
+    queryKey: taskKeys.detail(id ?? ''),
     queryFn: () => taskService.getById(id!),
     staleTime: Infinity,
     enabled: !!id,
@@ -26,10 +33,11 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: (data: CreateTaskInput) => taskService.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: taskKeys.all })
       toast.success('Tarea creada')
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('No se pudo crear la tarea', error)
       toast.error('No se pudo crear la tarea')
     },
   })
@@ -41,11 +49,12 @@ export function useUpdateTask() {
     mutationFn: ({ id, data }: { id: string; data: UpdateTaskInput }) =>
       taskService.update(id, data),
     onSuccess: (_data, { id }) => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', id] })
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: taskKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: taskKeys.all })
       toast.success('Tarea actualizada')
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('No se pudo actualizar la tarea', error)
       toast.error('No se pudo actualizar la tarea')
     },
   })
@@ -56,19 +65,12 @@ export function useDeleteTask() {
   return useMutation({
     mutationFn: (id: string) => taskService.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      queryClient.invalidateQueries({ queryKey: taskKeys.all })
       toast.success('Tarea eliminada')
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('No se pudo eliminar la tarea', error)
       toast.error('No se pudo eliminar la tarea')
     },
-  })
-}
-
-export function useTasksByCategory(category: TaskCategory) {
-  return useQuery<Task[]>({
-    queryKey: ['tasks', 'category', category],
-    queryFn: () => taskService.getByCategory(category),
-    staleTime: Infinity,
   })
 }
