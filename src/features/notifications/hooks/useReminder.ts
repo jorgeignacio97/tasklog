@@ -4,6 +4,9 @@ import { taskService } from '../../../lib/services'
 const REMINDER_INACTIVE_KEY = 'tasklog_reminder_inactive'
 const REMINDER_UNREPORTED_KEY = 'tasklog_reminder_unreported'
 
+const INACTIVITY_THRESHOLD_DAYS = 3
+const MONTH_END_WARNING_WINDOW_DAYS = 2
+
 const defaultNow = () => new Date()
 
 function daysAgo(dateStr: string, now: () => Date): number {
@@ -21,7 +24,7 @@ function isNearMonthEnd(now: () => Date): boolean {
     nowDate.getMonth() + 1,
     0,
   ).getDate()
-  return day >= lastDay - 2
+  return day >= lastDay - MONTH_END_WARNING_WINDOW_DAYS
 }
 
 function today(now: () => Date): string {
@@ -40,6 +43,14 @@ function markShown(key: string, now: () => Date): void {
   localStorage.setItem(key, today(now))
 }
 
+function notify(title: string, options?: NotificationOptions): void {
+  try {
+    new Notification(title, options)
+  } catch (error) {
+    console.error('No se pudo mostrar la notificación', error)
+  }
+}
+
 export function useReminder(now: () => Date = defaultNow) {
   useEffect(() => {
     if (!('Notification' in window)) return
@@ -53,23 +64,29 @@ export function useReminder(now: () => Date = defaultNow) {
 
     // Reminder 1: Check if 3+ days without tasks
     if (!wasShownToday(REMINDER_INACTIVE_KEY, now)) {
-      taskService.getAll().then((tasks) => {
-        if (tasks.length === 0) return
+      taskService
+        .getAll()
+        .then((tasks) => {
+          if (tasks.length === 0) return
 
-        // Sort by createdAt descending
-        const sorted = [...tasks].sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )
-        const latest = sorted[0]
+          // Sort by createdAt descending
+          const sorted = [...tasks].sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() -
+              new Date(a.createdAt).getTime(),
+          )
+          const latest = sorted[0]
 
-        if (daysAgo(latest.createdAt, now) >= 3) {
-          new Notification('TaskLog — Inactividad', {
-            body: `Hace ${daysAgo(latest.createdAt, now)} días que no registras tareas. ¡Registra algo nuevo!`,
-          })
-          markShown(REMINDER_INACTIVE_KEY, now)
-        }
-      })
+          if (daysAgo(latest.createdAt, now) >= INACTIVITY_THRESHOLD_DAYS) {
+            notify('TaskLog — Inactividad', {
+              body: `Hace ${daysAgo(latest.createdAt, now)} días que no registras tareas. ¡Registra algo nuevo!`,
+            })
+            markShown(REMINDER_INACTIVE_KEY, now)
+          }
+        })
+        .catch((error) => {
+          console.error('No se pudo comprobar la inactividad de tareas', error)
+        })
     }
 
     // Reminder 2: Check if near month end with unreported tasks
@@ -78,14 +95,19 @@ export function useReminder(now: () => Date = defaultNow) {
       const monthStart = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-01`
       const monthEnd = today(now)
 
-      taskService.getUnreportedInRange(monthStart, monthEnd).then((tasks) => {
-        if (tasks.length === 0) return
+      taskService
+        .getUnreportedInRange(monthStart, monthEnd)
+        .then((tasks) => {
+          if (tasks.length === 0) return
 
-        new Notification('TaskLog — Tareas sin reportar', {
-          body: `Tienes ${tasks.length} tarea${tasks.length > 1 ? 's' : ''} sin reportar cerca de fin de mes. ¡Crea tu reporte!`,
+          notify('TaskLog — Tareas sin reportar', {
+            body: `Tienes ${tasks.length} tarea${tasks.length > 1 ? 's' : ''} sin reportar cerca de fin de mes. ¡Crea tu reporte!`,
+          })
+          markShown(REMINDER_UNREPORTED_KEY, now)
         })
-        markShown(REMINDER_UNREPORTED_KEY, now)
-      })
+        .catch((error) => {
+          console.error('No se pudo comprobar las tareas sin reportar', error)
+        })
     }
   }, [now])
 }

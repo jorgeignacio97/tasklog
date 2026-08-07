@@ -205,6 +205,71 @@ describe('useReminder (RM-1..5)', () => {
     expect(localStorage.getItem(REMINDER_UNREPORTED_KEY)).toBe('2026-09-30')
   })
 
+  it('RM-6 Edge: a rejected getAll is caught and logged, never an unhandled rejection', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    taskServiceMock.getAll.mockRejectedValue(new Error('db exploded'))
+
+    renderHookWithProviders(() => useReminder(fixedNow))
+
+    await waitFor(() =>
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'No se pudo comprobar la inactividad de tareas',
+        expect.any(Error),
+      ),
+    )
+    expect(FakeNotification.instances).toHaveLength(0)
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('RM-6 Edge: a rejected getUnreportedInRange is caught and logged, never an unhandled rejection', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    taskServiceMock.getUnreportedInRange.mockRejectedValue(
+      new Error('range query failed'),
+    )
+
+    renderHookWithProviders(() => useReminder(fixedNow))
+
+    await waitFor(() =>
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'No se pudo comprobar las tareas sin reportar',
+        expect.any(Error),
+      ),
+    )
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('RM-6 Edge: a throwing Notification constructor is caught and logged instead of crashing', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    taskServiceMock.getAll.mockResolvedValue([
+      task(createdAtDaysAgo(3, fixedNow()).toISOString()),
+    ])
+    vi.stubGlobal(
+      'Notification',
+      class extends FakeNotification {
+        constructor(title: string, options?: NotificationOptions) {
+          super(title, options)
+          throw new Error('Notification constructor blew up')
+        }
+      },
+    )
+
+    renderHookWithProviders(() => useReminder(fixedNow))
+
+    await waitFor(() =>
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'No se pudo mostrar la notificación',
+        expect.any(Error),
+      ),
+    )
+    consoleErrorSpy.mockRestore()
+  })
+
   it('RM-5 Edge: key already set for today → that reminder does not fire', async () => {
     localStorage.setItem(REMINDER_INACTIVE_KEY, '2026-09-30')
     localStorage.setItem(REMINDER_UNREPORTED_KEY, '2026-09-30')
