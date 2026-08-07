@@ -7,10 +7,11 @@ import {
   PanelLeftClose,
   PanelLeft,
 } from 'lucide-react'
-import { useUIStore } from '../../stores/ui'
+import { useSidebarOpen, useToggleSidebar } from '../../stores/ui'
 
 export default function AppShell() {
-  const { sidebarOpen, toggleSidebar } = useUIStore()
+  const sidebarOpen = useSidebarOpen()
+  const toggleSidebar = useToggleSidebar()
 
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-100">
