@@ -17,7 +17,7 @@ const badgeColors: Record<BadgeVariant, string> = {
   sent: 'bg-emerald-500/20 text-emerald-300',
 }
 
-interface BadgeProps {
+type BadgeProps = {
   variant: BadgeVariant
   className?: string
 }

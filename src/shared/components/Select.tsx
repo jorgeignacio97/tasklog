@@ -1,12 +1,12 @@
 import type { SelectHTMLAttributes, Ref } from 'react'
 import { cn } from '../utils/cn'
 
-interface SelectOption {
+export type SelectOption = {
   value: string
   label: string
 }
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label?: string
   error?: string
   options: SelectOption[]

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '../utils/cn'
 
-interface CardProps {
+type CardProps = {
   children: ReactNode
   header?: ReactNode
   footer?: ReactNode

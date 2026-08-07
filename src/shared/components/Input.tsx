@@ -1,7 +1,7 @@
 import type { InputHTMLAttributes, Ref } from 'react'
 import { cn } from '../utils/cn'
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string
   error?: string
   ref?: Ref<HTMLInputElement>

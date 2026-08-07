@@ -1,7 +1,7 @@
 import { type ReactNode, useRef, useEffect } from 'react'
 import { X } from 'lucide-react'
 
-interface ModalProps {
+type ModalProps = {
   isOpen: boolean
   onClose: () => void
   title: string

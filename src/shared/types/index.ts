@@ -1,16 +1,23 @@
-export type TaskCategory = 'frontend' | 'backend' | 'bug' | 'review' | 'other'
+import type { z } from 'zod'
+import {
+  taskCategorySchema,
+  taskStatusSchema,
+  reportStatusSchema,
+} from '../schemas/enums'
 
-export type TaskStatus = 'pendiente' | 'en-curso' | 'completada'
+export type TaskCategory = z.infer<typeof taskCategorySchema>
 
-export type ReportStatus = 'draft' | 'sent'
+export type TaskStatus = z.infer<typeof taskStatusSchema>
 
-export interface Note {
+export type ReportStatus = z.infer<typeof reportStatusSchema>
+
+export type Note = {
   id: string
   content: string
   createdAt: string
 }
 
-export interface Task {
+export type Task = {
   id: string
   title: string
   description?: string
@@ -24,7 +31,7 @@ export interface Task {
   reportedInReportId?: string
 }
 
-export interface Report {
+export type Report = {
   id: string
   startDate: string
   endDate: string

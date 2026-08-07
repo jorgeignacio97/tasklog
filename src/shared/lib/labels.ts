@@ -1,9 +1,5 @@
 import type { TaskCategory, TaskStatus, ReportStatus } from '../types'
-
-interface SelectOption {
-  value: string
-  label: string
-}
+import type { SelectOption } from '../components/Select'
 
 export const categoryLabels: Record<TaskCategory, string> = {
   frontend: 'Frontend',

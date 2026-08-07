@@ -1,7 +1,7 @@
 import Badge from '../../../shared/components/Badge'
 import type { Task } from '../../../shared/types'
 
-interface TaskStatusCellProps {
+type TaskStatusCellProps = {
   task: Task
   onToggle: (task: Task) => void
 }

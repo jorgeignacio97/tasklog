@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '../../../shared/components/Button'
 import type { Task } from '../../../shared/types'
 
-interface TaskRowActionsProps {
+type TaskRowActionsProps = {
   task: Task
   onDeleteClick: (task: Task) => void
 }

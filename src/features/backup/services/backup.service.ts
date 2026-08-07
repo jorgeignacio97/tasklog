@@ -5,7 +5,7 @@ import type { BackupData } from '../schemas/backup.schema'
  *
  * No Dexie types leak into the interface — the consumer is storage-agnostic.
  */
-export interface BackupService {
+export type BackupService = {
   exportData(): Promise<BackupData>
   importData(data: unknown): Promise<void>
 }

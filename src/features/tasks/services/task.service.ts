@@ -11,7 +11,7 @@ export type UpdateTaskInput = Partial<
  *
  * No Dexie types leak into the interface — the consumer is storage-agnostic.
  */
-export interface TaskService {
+export type TaskService = {
   getAll(): Promise<Task[]>
   getById(id: string): Promise<Task | undefined>
   create(data: CreateTaskInput): Promise<Task>
