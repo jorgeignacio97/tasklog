@@ -81,11 +81,11 @@ describe('TaskList (TC-2)', () => {
 
     await waitFor(() => expect(tbodyRows(container)).toHaveLength(3))
 
-    // Category filter
+    // Category filter (search-param driven navigation settles asynchronously)
     fireEvent.change(screen.getByLabelText('Categoría'), {
       target: { value: 'bug' },
     })
-    expect(tbodyRows(container)).toHaveLength(1)
+    await waitFor(() => expect(tbodyRows(container)).toHaveLength(1))
     expect(screen.getByText('Alpha bug')).toBeInTheDocument()
     expect(screen.queryByText('Beta frontend')).not.toBeInTheDocument()
 
@@ -93,7 +93,7 @@ describe('TaskList (TC-2)', () => {
     fireEvent.change(screen.getByLabelText('Estado'), {
       target: { value: 'completada' },
     })
-    expect(tbodyRows(container)).toHaveLength(0)
+    await waitFor(() => expect(tbodyRows(container)).toHaveLength(0))
 
     fireEvent.change(screen.getByLabelText('Categoría'), {
       target: { value: '' },
@@ -101,7 +101,7 @@ describe('TaskList (TC-2)', () => {
     fireEvent.change(screen.getByLabelText('Estado'), {
       target: { value: 'en-curso' },
     })
-    expect(tbodyRows(container)).toHaveLength(1)
+    await waitFor(() => expect(tbodyRows(container)).toHaveLength(1))
     expect(screen.getByText('Beta frontend')).toBeInTheDocument()
 
     // Search filter
@@ -111,7 +111,7 @@ describe('TaskList (TC-2)', () => {
     fireEvent.change(screen.getByLabelText('Estado'), {
       target: { value: '' },
     })
-    expect(tbodyRows(container)).toHaveLength(1)
+    await waitFor(() => expect(tbodyRows(container)).toHaveLength(1))
     expect(screen.getByText('Gamma review')).toBeInTheDocument()
   })
 
@@ -126,10 +126,35 @@ describe('TaskList (TC-2)', () => {
     expect(firstRowTitle(container)).toBe('Gamma review')
 
     fireEvent.click(screen.getByRole('button', { name: 'Título' }))
-    expect(firstRowTitle(container)).toBe('Alpha bug')
+    await waitFor(() => expect(firstRowTitle(container)).toBe('Alpha bug'))
 
     fireEvent.click(screen.getByRole('button', { name: 'Título' }))
-    expect(firstRowTitle(container)).toBe('Gamma review')
+    await waitFor(() => expect(firstRowTitle(container)).toBe('Gamma review'))
+  })
+
+  it('TC-2 Error: a rejected query renders the error state instead of the empty state, with a working retry', async () => {
+    taskServiceMock.getAll
+      .mockRejectedValueOnce(new Error('IndexedDB unavailable'))
+      .mockResolvedValueOnce(seedTasks)
+
+    renderWithProviders(<TaskList />)
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('No se pudieron cargar las tareas'),
+      ).toBeInTheDocument(),
+    )
+    expect(screen.queryByText('Todavía no hay tareas')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }))
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText('No se pudieron cargar las tareas'),
+      ).not.toBeInTheDocument(),
+    )
+    expect(screen.getByText('Gamma review')).toBeInTheDocument()
+    expect(taskServiceMock.getAll).toHaveBeenCalledTimes(2)
   })
 
   it('TC-2 Edge: zero tasks renders the empty state', async () => {
@@ -150,12 +175,14 @@ describe('TaskList (TC-2)', () => {
     fireEvent.change(screen.getByLabelText('Buscar'), {
       target: { value: 'zzz-no-match' },
     })
-    expect(
-      screen.getByText('No hay tareas que coincidan con los filtros'),
-    ).toBeInTheDocument()
+    await waitFor(() =>
+      expect(
+        screen.getByText('No hay tareas que coincidan con los filtros'),
+      ).toBeInTheDocument(),
+    )
 
     fireEvent.click(screen.getByText('Limpiar filtros'))
-    expect(tbodyRows(container)).toHaveLength(3)
+    await waitFor(() => expect(tbodyRows(container)).toHaveLength(3))
   })
 
   it('TC-2 Happy: toggling a row status calls useUpdateTask with the next status', async () => {

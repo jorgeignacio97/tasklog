@@ -9,27 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TasksIndexRouteImport } from './routes/tasks/index'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsIndexRouteImport } from './routes/reports/index'
-import { Route as TasksNewRouteImport } from './routes/tasks/new'
-import { Route as TasksTaskIdRouteImport } from './routes/tasks/$taskId'
 import { Route as ReportsHistoryRouteImport } from './routes/reports/history'
+import { Route as TasksIndexRouteImport } from './routes/tasks/index'
+import { Route as TasksTaskIdRouteImport } from './routes/tasks/$taskId'
+import { Route as TasksNewRouteImport } from './routes/tasks/new'
 
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TasksIndexRoute = TasksIndexRouteImport.update({
-  id: '/tasks/',
-  path: '/tasks/',
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsIndexRoute = ReportsIndexRouteImport.update({
@@ -37,9 +32,14 @@ const ReportsIndexRoute = ReportsIndexRouteImport.update({
   path: '/reports/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TasksNewRoute = TasksNewRouteImport.update({
-  id: '/tasks/new',
-  path: '/tasks/new',
+const ReportsHistoryRoute = ReportsHistoryRouteImport.update({
+  id: '/reports/history',
+  path: '/reports/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksIndexRoute = TasksIndexRouteImport.update({
+  id: '/tasks/',
+  path: '/tasks/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
@@ -47,9 +47,9 @@ const TasksTaskIdRoute = TasksTaskIdRouteImport.update({
   path: '/tasks/$taskId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ReportsHistoryRoute = ReportsHistoryRouteImport.update({
-  id: '/reports/history',
-  path: '/reports/history',
+const TasksNewRoute = TasksNewRouteImport.update({
+  id: '/tasks/new',
+  path: '/tasks/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -123,13 +123,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -137,11 +130,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tasks/': {
-      id: '/tasks/'
-      path: '/tasks'
-      fullPath: '/tasks/'
-      preLoaderRoute: typeof TasksIndexRouteImport
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports/': {
@@ -151,11 +144,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/tasks/new': {
-      id: '/tasks/new'
-      path: '/tasks/new'
-      fullPath: '/tasks/new'
-      preLoaderRoute: typeof TasksNewRouteImport
+    '/reports/history': {
+      id: '/reports/history'
+      path: '/reports/history'
+      fullPath: '/reports/history'
+      preLoaderRoute: typeof ReportsHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks/': {
+      id: '/tasks/'
+      path: '/tasks'
+      fullPath: '/tasks/'
+      preLoaderRoute: typeof TasksIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tasks/$taskId': {
@@ -165,11 +165,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TasksTaskIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reports/history': {
-      id: '/reports/history'
-      path: '/reports/history'
-      fullPath: '/reports/history'
-      preLoaderRoute: typeof ReportsHistoryRouteImport
+    '/tasks/new': {
+      id: '/tasks/new'
+      path: '/tasks/new'
+      fullPath: '/tasks/new'
+      preLoaderRoute: typeof TasksNewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

@@ -1,17 +1,12 @@
 import { z } from 'zod'
+import { taskCategorySchema, taskStatusSchema } from '../../../shared/schemas/enums'
 
-export const taskCategorySchema = z.enum([
-  'frontend',
-  'backend',
-  'bug',
-  'review',
-  'other',
-])
+export { taskCategorySchema, taskStatusSchema }
 
-export const taskStatusSchema = z.enum(['pendiente', 'en-curso', 'completada'])
+export const TITLE_MAX_LENGTH = 200
 
 export const taskSchema = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(TITLE_MAX_LENGTH),
   description: z.string().optional(),
   category: taskCategorySchema,
   status: taskStatusSchema,
@@ -19,3 +14,13 @@ export const taskSchema = z.object({
 })
 
 export type TaskInput = z.infer<typeof taskSchema>
+
+export const taskListSearchSchema = z.object({
+  category: taskCategorySchema.optional().catch(undefined),
+  status: taskStatusSchema.optional().catch(undefined),
+  q: z.string().optional().catch(undefined),
+  sortBy: z.string().optional().catch(undefined),
+  sortDir: z.enum(['asc', 'desc']).optional().catch(undefined),
+})
+
+export type TaskListSearch = z.infer<typeof taskListSearchSchema>

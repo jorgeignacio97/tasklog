@@ -17,6 +17,7 @@ const reportServiceMock = vi.hoisted(() => ({
   getAll: vi.fn(),
   getById: vi.fn(),
   create: vi.fn(),
+  createWithTaskLinks: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
   getTasksForReport: vi.fn(),
@@ -59,13 +60,21 @@ const previewTasks: Task[] = [
   }),
 ]
 
+// Date inputs are search-param driven (URL navigation), which can settle
+// asynchronously — wait for each value to land before moving to the next step.
 async function setDateRange() {
   fireEvent.change(screen.getByLabelText('Fecha inicio'), {
     target: { value: '2026-07-01' },
   })
+  await waitFor(() =>
+    expect(screen.getByLabelText('Fecha inicio')).toHaveValue('2026-07-01'),
+  )
   fireEvent.change(screen.getByLabelText('Fecha fin'), {
     target: { value: '2026-07-31' },
   })
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: /Vista previa/ })).toBeEnabled(),
+  )
   fireEvent.click(screen.getByRole('button', { name: /Vista previa/ }))
 }
 
@@ -85,7 +94,9 @@ describe('ReportBuilder (RB-1..3)', () => {
     taskServiceMock.getUnreportedInRange.mockResolvedValue(previewTasks)
     // Keep the create mutation pending so its isPending state change re-renders
     // the builder without altering SummaryCards' props
-    reportServiceMock.create.mockImplementation(() => new Promise(() => {}))
+    reportServiceMock.createWithTaskLinks.mockImplementation(
+      () => new Promise(() => {}),
+    )
     const { container } = renderWithProviders(<ReportBuilder />)
 
     await setDateRange()
@@ -110,7 +121,7 @@ describe('ReportBuilder (RB-1..3)', () => {
     expect(cardsAfterMutation).toBe(cardsAfterLoad)
   })
 
-  it('RB-2 Edge: the preview button is disabled until both dates are set', () => {
+  it('RB-2 Edge: the preview button is disabled until both dates are set', async () => {
     renderWithProviders(<ReportBuilder />)
 
     const previewButton = screen.getByRole('button', { name: /Vista previa/ })
@@ -119,12 +130,15 @@ describe('ReportBuilder (RB-1..3)', () => {
     fireEvent.change(screen.getByLabelText('Fecha inicio'), {
       target: { value: '2026-07-01' },
     })
+    await waitFor(() =>
+      expect(screen.getByLabelText('Fecha inicio')).toHaveValue('2026-07-01'),
+    )
     expect(previewButton).toBeDisabled()
 
     fireEvent.change(screen.getByLabelText('Fecha fin'), {
       target: { value: '2026-07-31' },
     })
-    expect(previewButton).toBeEnabled()
+    await waitFor(() => expect(previewButton).toBeEnabled())
   })
 
   it('RB-2 Happy: preview shows the three summary cards with correct counts', async () => {
@@ -190,7 +204,7 @@ describe('ReportBuilder (RB-1..3)', () => {
 
   it('RB-3 Happy: Generar reporte sends the payload and navigates to /reports/history', async () => {
     taskServiceMock.getUnreportedInRange.mockResolvedValue(previewTasks)
-    reportServiceMock.create.mockResolvedValue({
+    reportServiceMock.createWithTaskLinks.mockResolvedValue({
       id: 'r-1',
       startDate: '2026-07-01',
       endDate: '2026-07-31',
@@ -207,22 +221,20 @@ describe('ReportBuilder (RB-1..3)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Generar reporte/ }))
 
+    // taskIds are destructured out of the report data and passed as the
+    // second argument to the atomic create+link service call.
     await waitFor(() =>
-      expect(reportServiceMock.create).toHaveBeenCalledWith({
-        startDate: '2026-07-01',
-        endDate: '2026-07-31',
-        status: 'draft',
-        taskCount: 2,
-        totalHours: 3,
-      }),
+      expect(reportServiceMock.createWithTaskLinks).toHaveBeenCalledWith(
+        {
+          startDate: '2026-07-01',
+          endDate: '2026-07-31',
+          status: 'draft',
+          taskCount: 2,
+          totalHours: 3,
+        },
+        ['t-1', 't-2'],
+      ),
     )
-    // taskIds are destructured out of the create payload and applied via update
-    expect(taskServiceMock.update).toHaveBeenCalledWith('t-1', {
-      reportedInReportId: 'r-1',
-    })
-    expect(taskServiceMock.update).toHaveBeenCalledWith('t-2', {
-      reportedInReportId: 'r-1',
-    })
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/reports/history'),
     )

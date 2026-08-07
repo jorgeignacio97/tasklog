@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,7 +9,7 @@ import {
   type ColumnDef,
   type RowData,
 } from '@tanstack/react-table'
-import { Plus, ArrowUpDown } from 'lucide-react'
+import { AlertTriangle, Plus, ArrowUpDown } from 'lucide-react'
 import { useTasks, useUpdateTask, useDeleteTask } from '../hooks/useTasks'
 import { Button } from '../../../shared/components/Button'
 import { Input } from '../../../shared/components/Input'
@@ -18,8 +18,9 @@ import Badge from '../../../shared/components/Badge'
 import Modal from '../../../shared/components/Modal'
 import { TaskRowActions } from './TaskRowActions'
 import { TaskStatusCell } from './TaskStatusCell'
-import { formatDate, formatDuration } from '../../../shared/utils/cn'
+import { formatDate, formatDuration } from '../../../shared/utils/format'
 import type { Task, TaskCategory, TaskStatus } from '../../../shared/types'
+import type { TaskListSearch } from '../schemas/task.schema'
 import {
   categoryFilterOptions,
   statusFilterOptions,
@@ -161,37 +162,51 @@ function SkeletonRow() {
 // ── Main component ──────────────────────────────────────────────────────
 
 export default function TaskList() {
-  const { data: tasks = [], isLoading } = useTasks()
+  const { data: tasks = [], isLoading, isError, refetch } = useTasks()
   const updateMutation = useUpdateTask()
   const deleteMutation = useDeleteTask()
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [categoryFilter, setCategoryFilter] = useState<string>('')
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const [searchText, setSearchText] = useState('')
+  const search = useRouterState({
+    select: (s) => s.location.search,
+  }) as Partial<TaskListSearch>
+  const navigate = useNavigate({ from: '/tasks/' })
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null)
 
-  const filteredTasks = useMemo(
-    () =>
-      tasks.filter((task) => {
-        if (categoryFilter && task.category !== categoryFilter) return false
-        if (statusFilter && task.status !== statusFilter) return false
-        if (searchText) {
-          const q = searchText.toLowerCase()
-          return (
-            task.title.toLowerCase().includes(q) ||
-            (task.description?.toLowerCase().includes(q) ?? false)
-          )
-        }
-        return true
-      }),
-    [tasks, categoryFilter, statusFilter, searchText],
-  )
+  const categoryFilter = search.category ?? ''
+  const statusFilter = search.status ?? ''
+  const searchText = search.q ?? ''
+  const sorting: SortingState = search.sortBy
+    ? [{ id: search.sortBy, desc: search.sortDir === 'desc' }]
+    : []
+
+  const updateSearch = (patch: Partial<TaskListSearch>) => {
+    navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true })
+  }
+
+  const filteredTasks = tasks.filter((task) => {
+    if (categoryFilter && task.category !== categoryFilter) return false
+    if (statusFilter && task.status !== statusFilter) return false
+    if (searchText) {
+      const q = searchText.toLowerCase()
+      return (
+        task.title.toLowerCase().includes(q) ||
+        (task.description?.toLowerCase().includes(q) ?? false)
+      )
+    }
+    return true
+  })
 
   const table = useReactTable({
     data: filteredTasks,
     columns,
     state: { sorting },
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      const next = typeof updater === 'function' ? updater(sorting) : updater
+      const first = next[0]
+      updateSearch({
+        sortBy: first?.id,
+        sortDir: first ? (first.desc ? 'desc' : 'asc') : undefined,
+      })
+    },
     getRowId: (task) => task.id,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -212,9 +227,9 @@ export default function TaskList() {
     })
   }
 
-  const showEmptyState = !isLoading && tasks.length === 0
+  const showEmptyState = !isLoading && !isError && tasks.length === 0
   const showNoResults =
-    !isLoading && tasks.length > 0 && filteredTasks.length === 0
+    !isLoading && !isError && tasks.length > 0 && filteredTasks.length === 0
 
   return (
     <div className="space-y-4">
@@ -225,7 +240,13 @@ export default function TaskList() {
             label="Categoría"
             options={categoryFilterOptions}
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) =>
+              updateSearch({
+                category: (e.target.value || undefined) as
+                  | TaskCategory
+                  | undefined,
+              })
+            }
           />
         </div>
         <div className="w-40">
@@ -233,7 +254,13 @@ export default function TaskList() {
             label="Estado"
             options={statusFilterOptions}
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) =>
+              updateSearch({
+                status: (e.target.value || undefined) as
+                  | TaskStatus
+                  | undefined,
+              })
+            }
           />
         </div>
         <div className="w-56">
@@ -241,7 +268,7 @@ export default function TaskList() {
             label="Buscar"
             placeholder="Buscar por título…"
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={(e) => updateSearch({ q: e.target.value || undefined })}
           />
         </div>
         <Link to="/tasks/new">
@@ -279,6 +306,23 @@ export default function TaskList() {
         </div>
       )}
 
+      {/* ── Error state ─────────────────────────────────────────────── */}
+      {isError && (
+        <div className="flex flex-col items-center gap-4 py-16">
+          <AlertTriangle size={40} className="text-red-400" />
+          <p className="text-lg text-zinc-400">
+            No se pudieron cargar las tareas
+          </p>
+          <p className="text-sm text-zinc-500">
+            Puede que la base de datos local no esté disponible en este
+            navegador.
+          </p>
+          <Button variant="secondary" onClick={() => refetch()}>
+            Reintentar
+          </Button>
+        </div>
+      )}
+
       {/* ── Empty state ─────────────────────────────────────────────── */}
       {showEmptyState && (
         <div className="flex flex-col items-center gap-4 py-16">
@@ -300,11 +344,13 @@ export default function TaskList() {
           </p>
           <button
             type="button"
-            onClick={() => {
-              setCategoryFilter('')
-              setStatusFilter('')
-              setSearchText('')
-            }}
+            onClick={() =>
+              updateSearch({
+                category: undefined,
+                status: undefined,
+                q: undefined,
+              })
+            }
             className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"
           >
             Limpiar filtros
@@ -313,7 +359,7 @@ export default function TaskList() {
       )}
 
       {/* ── Table ───────────────────────────────────────────────────── */}
-      {!isLoading && filteredTasks.length > 0 && (
+      {!isLoading && !isError && filteredTasks.length > 0 && (
         <div className="overflow-hidden rounded-lg border border-zinc-800">
           <table className="w-full text-left text-sm">
             <thead>

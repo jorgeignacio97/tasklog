@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { FileText, Trash2 } from 'lucide-react'
+import { AlertTriangle, FileText, Trash2 } from 'lucide-react'
 import { Button } from '../../../shared/components/Button'
 import Modal from '../../../shared/components/Modal'
 import { ReportListItem } from './ReportListItem'
@@ -12,7 +12,7 @@ import {
 import type { Report } from '../../../shared/types'
 
 export default function ReportHistory() {
-  const { data: reports, isLoading } = useReports()
+  const { data: reports, isLoading, isError, refetch } = useReports()
   const updateReport = useUpdateReport()
   const deleteReport = useDeleteReport()
 
@@ -49,6 +49,30 @@ export default function ReportHistory() {
               className="h-20 animate-pulse rounded-lg bg-zinc-800"
             />
           ))}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Error state ──────────────────────────────────────────
+  if (isError) {
+    return (
+      <div className="p-4 max-w-3xl mx-auto">
+        <h1 className="text-xl font-semibold text-zinc-100 mb-6">
+          Historial de reportes
+        </h1>
+        <div className="text-center py-16 text-zinc-500">
+          <AlertTriangle size={48} className="mx-auto mb-4 text-red-400" />
+          <p className="text-lg font-medium mb-1 text-zinc-300">
+            No se pudieron cargar los reportes
+          </p>
+          <p className="text-sm mb-4">
+            Puede que la base de datos local no esté disponible en este
+            navegador.
+          </p>
+          <Button variant="secondary" onClick={() => refetch()}>
+            Reintentar
+          </Button>
         </div>
       </div>
     )

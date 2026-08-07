@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { Calendar, Eye, FileText, Clock, ListTree, Loader2 } from 'lucide-react'
 import Card from '../../../shared/components/Card'
 import Badge from '../../../shared/components/Badge'
 import { Button } from '../../../shared/components/Button'
-import { formatDuration, formatDate } from '../../../shared/utils/cn'
+import { formatDuration, formatDate } from '../../../shared/utils/format'
 import { useUnreportedTasks, useCreateReport } from '../hooks/useReports'
 import type { Task, TaskCategory } from '../../../shared/types'
+import type { ReportBuilderSearch } from '../schemas/report.schema'
 
 const categoryOrder: TaskCategory[] = [
   'frontend',
@@ -18,7 +19,7 @@ const categoryOrder: TaskCategory[] = [
 
 // ── Summary cards (module scope: stable identity across renders — RB-1) ──
 
-interface SummaryCardsProps {
+type SummaryCardsProps = {
   showPreview: boolean
   isLoadingPreview: boolean
   unreportedTasks: Task[] | undefined
@@ -76,7 +77,7 @@ function SummaryCards({
 
 // ── Preview area (module scope: stable identity across renders — RB-1) ──
 
-interface PreviewAreaProps {
+type PreviewAreaProps = {
   showPreview: boolean
   isLoadingPreview: boolean
   unreportedTasks: Task[] | undefined
@@ -182,12 +183,20 @@ function PreviewArea({
 }
 
 export default function ReportBuilder() {
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const search = useRouterState({
+    select: (s) => s.location.search,
+  }) as Partial<ReportBuilderSearch>
   const [showPreview, setShowPreview] = useState(false)
 
-  const navigate = useNavigate()
+  const startDate = search.startDate ?? ''
+  const endDate = search.endDate ?? ''
+
+  const navigate = useNavigate({ from: '/reports/' })
   const createReport = useCreateReport()
+
+  const updateSearch = (patch: Partial<ReportBuilderSearch>) => {
+    navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true })
+  }
 
   const { data: unreportedTasks, isLoading: isLoadingPreview } =
     useUnreportedTasks(
@@ -257,7 +266,7 @@ export default function ReportBuilder() {
               type="date"
               value={startDate}
               onChange={(e) => {
-                setStartDate(e.target.value)
+                updateSearch({ startDate: e.target.value || undefined })
                 setShowPreview(false)
               }}
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 [color-scheme:dark]"
@@ -275,7 +284,7 @@ export default function ReportBuilder() {
               type="date"
               value={endDate}
               onChange={(e) => {
-                setEndDate(e.target.value)
+                updateSearch({ endDate: e.target.value || undefined })
                 setShowPreview(false)
               }}
               className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 [color-scheme:dark]"
