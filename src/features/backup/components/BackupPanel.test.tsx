@@ -93,6 +93,26 @@ describe('BackupPanel (BP-1..3)', () => {
     )
   })
 
+  it('BP-3 Edge: a file over 10MB is rejected before reading it, with no confirm modal', async () => {
+    renderWithProviders(<BackupPanel />)
+
+    const input = screen.getByLabelText('Importar archivo de backup')
+    const oversizedFile = makeFile(sampleBackup)
+    Object.defineProperty(oversizedFile, 'size', {
+      value: 11 * 1024 * 1024,
+    })
+
+    fireEvent.change(input, { target: { files: [oversizedFile] } })
+
+    await waitFor(() =>
+      expect(sonnerToast.error).toHaveBeenCalledWith(
+        'El archivo es demasiado grande (máximo 10MB). Verificá que sea un backup válido de TaskLog.',
+      ),
+    )
+    expect(document.querySelector('dialog')?.open).not.toBe(true)
+    expect(backupServiceMock.importData).not.toHaveBeenCalled()
+  })
+
   it('BP-3 Edge: an invalid file shows an error toast and never calls importData with unparsable JSON', async () => {
     renderWithProviders(<BackupPanel />)
 

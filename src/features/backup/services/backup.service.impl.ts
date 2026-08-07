@@ -1,4 +1,7 @@
 import { db } from '../../../lib/db'
+// Direct paths, not the tasks/reports barrels: those barrels also export UI
+// components whose hooks import lib/services.ts, which constructs THIS
+// class — routing through the barrel here would be a circular ESM import.
 import { TaskServiceImpl } from '../../tasks/services/task.service.impl'
 import { ReportServiceImpl } from '../../reports/services/report.service.impl'
 import { backupDataSchema, type BackupData } from '../schemas/backup.schema'

@@ -6,6 +6,10 @@ import Card from '../../../shared/components/Card'
 import Modal from '../../../shared/components/Modal'
 import { Button } from '../../../shared/components/Button'
 import { backupService } from '../../../lib/services'
+import { taskKeys } from '../../tasks'
+import { reportKeys } from '../../reports'
+
+const MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024 // 10MB
 
 function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -40,7 +44,8 @@ export default function BackupPanel() {
       URL.revokeObjectURL(url)
 
       toast.success('Datos exportados')
-    } catch {
+    } catch (error) {
+      console.error('No se pudieron exportar los datos', error)
       toast.error('No se pudieron exportar los datos')
     } finally {
       setIsExporting(false)
@@ -51,6 +56,12 @@ export default function BackupPanel() {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
+    if (file.size > MAX_IMPORT_FILE_BYTES) {
+      toast.error(
+        'El archivo es demasiado grande (máximo 10MB). Verificá que sea un backup válido de TaskLog.',
+      )
+      return
+    }
     setPendingFile(file)
   }
 
@@ -68,12 +79,13 @@ export default function BackupPanel() {
       const parsed = JSON.parse(text)
       await backupService.importData(parsed)
 
-      queryClient.invalidateQueries({ queryKey: ['tasks'] })
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
+      queryClient.invalidateQueries({ queryKey: taskKeys.all })
+      queryClient.invalidateQueries({ queryKey: reportKeys.all })
 
       toast.success('Datos importados')
       setPendingFile(null)
-    } catch {
+    } catch (error) {
+      console.error('No se pudo importar el archivo de backup', error)
       toast.error(
         'No se pudo importar el archivo. Tus datos actuales no se modificaron.',
       )
