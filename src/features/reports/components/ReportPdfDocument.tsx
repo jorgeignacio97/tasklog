@@ -1,5 +1,5 @@
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
-import { formatDate, formatDuration } from '../../../shared/utils/cn'
+import { formatDate, formatDuration } from '../../../shared/utils/format'
 import { badgeLabels } from '../../../shared/lib/labels'
 import type { Report, Task } from '../../../shared/types'
 

@@ -1,7 +1,10 @@
 import { z } from 'zod'
+// Direct paths, not the tasks/reports barrels — see backup.service.impl.ts
+// for why (avoids a circular ESM import through lib/services.ts).
 import {
   taskCategorySchema,
   taskStatusSchema,
+  TITLE_MAX_LENGTH,
 } from '../../tasks/schemas/task.schema'
 import { reportStatusSchema } from '../../reports/schemas/report.schema'
 
@@ -13,7 +16,7 @@ const noteSchema = z.object({
 
 const taskDataSchema = z.object({
   id: z.string(),
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(TITLE_MAX_LENGTH),
   description: z.string().optional(),
   category: taskCategorySchema,
   status: taskStatusSchema,
