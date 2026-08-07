@@ -1,9 +1,9 @@
 import { db } from '../../../lib/db'
 import { resetDbBeforeEach } from '../../../shared/utils/testDb'
 import { ReportServiceImpl } from './report.service.impl'
-import { TaskServiceImpl } from '../../tasks/services/task.service.impl'
+import { TaskServiceImpl } from '../../tasks'
 import type { CreateReportInput } from './report.service'
-import type { CreateTaskInput } from '../../tasks/services/task.service'
+import type { CreateTaskInput } from '../../tasks'
 
 resetDbBeforeEach()
 
@@ -173,6 +173,51 @@ describe('ReportServiceImpl', () => {
       const fetched = await reportService.getById(created.id)
       expect(fetched?.status).toBe('sent')
       expect(fetched?.totalHours).toBe(8)
+    })
+  })
+
+  describe('createWithTaskLinks atomicity (RS-11)', () => {
+    it('links every task and persists the report when all task ids exist', async () => {
+      const t1 = await taskService.create(makeTaskInput({ title: 'Task 1' }))
+      const t2 = await taskService.create(makeTaskInput({ title: 'Task 2' }))
+
+      const report = await reportService.createWithTaskLinks(
+        makeReportInput({ taskCount: 2 }),
+        [t1.id, t2.id],
+      )
+
+      expect(await reportService.getById(report.id)).toBeDefined()
+      expect((await db.tasks.get(t1.id))?.reportedInReportId).toBe(report.id)
+      expect((await db.tasks.get(t2.id))?.reportedInReportId).toBe(report.id)
+    })
+
+    it('rolls back the whole batch — including the report and any prior successful links — if one task link fails', async () => {
+      const t1 = await taskService.create(makeTaskInput({ title: 'Task 1' }))
+      const t2 = await taskService.create(makeTaskInput({ title: 'Task 2' }))
+
+      await expect(
+        reportService.createWithTaskLinks(makeReportInput(), [
+          t1.id,
+          'missing-task',
+          t2.id,
+        ]),
+      ).rejects.toThrow('Task(s) not found: missing-task')
+
+      // No orphan report persisted
+      expect(await reportService.getAll()).toHaveLength(0)
+
+      // Tasks that would have succeeded standalone are NOT linked — rolled back
+      expect((await db.tasks.get(t1.id))?.reportedInReportId).toBeUndefined()
+      expect((await db.tasks.get(t2.id))?.reportedInReportId).toBeUndefined()
+    })
+
+    it('creates a report with no task links when taskIds is empty', async () => {
+      const report = await reportService.createWithTaskLinks(
+        makeReportInput({ taskCount: 0 }),
+        [],
+      )
+
+      expect(await reportService.getById(report.id)).toBeDefined()
     })
   })
 

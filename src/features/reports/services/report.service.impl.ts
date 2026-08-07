@@ -30,6 +30,42 @@ export class ReportServiceImpl implements ReportService {
     return report
   }
 
+  async createWithTaskLinks(
+    data: CreateReportInput,
+    taskIds: string[],
+  ): Promise<Report> {
+    const id = crypto.randomUUID()
+    const now = new Date().toISOString()
+
+    const report: Report = {
+      ...data,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    }
+
+    await db.transaction('rw', db.reports, db.tasks, async () => {
+      await db.reports.add(report)
+
+      if (taskIds.length > 0) {
+        const updatedCounts = await Promise.all(
+          taskIds.map((taskId) =>
+            db.tasks.update(taskId, {
+              reportedInReportId: id,
+              updatedAt: now,
+            }),
+          ),
+        )
+        const missing = taskIds.filter((_, i) => updatedCounts[i] === 0)
+        if (missing.length > 0) {
+          throw new Error(`Task(s) not found: ${missing.join(', ')}`)
+        }
+      }
+    })
+
+    return report
+  }
+
   async update(id: string, data: UpdateReportInput): Promise<Report> {
     const now = new Date().toISOString()
 

@@ -2,7 +2,7 @@ import { waitFor } from '@testing-library/react'
 import type { Mock } from 'vitest'
 import { renderHookWithProviders } from '../../../shared/utils/testUtils'
 import type { ReportService } from '../services/report.service'
-import { useTasks } from '../../tasks/hooks/useTasks'
+import { useTasks } from '../../tasks'
 import {
   useReports,
   useReport,
@@ -26,6 +26,7 @@ const { taskServiceMock, reportServiceMock, sonnerToast } = vi.hoisted(() => ({
     getAll: vi.fn(),
     getById: vi.fn(),
     create: vi.fn(),
+    createWithTaskLinks: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
     getTasksForReport: vi.fn(),
@@ -120,11 +121,12 @@ describe('useReports hooks (RHK-1..4)', () => {
     expect(result.current.isLoading).toBe(false)
   })
 
-  it('RHK-2 Happy: create once without taskIds, update once per task, both key sets invalidated', async () => {
+  it('RHK-2 Happy: createWithTaskLinks called once with the report data and taskIds split apart, both key sets invalidated', async () => {
     reportServiceMock.getAll.mockResolvedValue([])
     taskServiceMock.getAll.mockResolvedValue([])
-    reportServiceMock.create.mockResolvedValue(makeReport({ id: 'r-new' }))
-    taskServiceMock.update.mockResolvedValue(makeTask())
+    reportServiceMock.createWithTaskLinks.mockResolvedValue(
+      makeReport({ id: 'r-new' }),
+    )
 
     const { result } = renderHookWithProviders(() => {
       useReports()
@@ -144,23 +146,19 @@ describe('useReports hooks (RHK-1..4)', () => {
       taskIds: ['t-1', 't-2'],
     })
 
-    // create called exactly once, payload WITHOUT taskIds
-    expect(reportServiceMock.create).toHaveBeenCalledTimes(1)
-    expect(reportServiceMock.create).toHaveBeenCalledWith({
-      startDate: '2026-07-01',
-      endDate: '2026-07-31',
-      status: 'draft',
-      taskCount: 2,
-      totalHours: 3,
-    })
-    // update called once per task with the new report id
-    expect(taskServiceMock.update).toHaveBeenCalledTimes(2)
-    expect(taskServiceMock.update).toHaveBeenCalledWith('t-1', {
-      reportedInReportId: 'r-new',
-    })
-    expect(taskServiceMock.update).toHaveBeenCalledWith('t-2', {
-      reportedInReportId: 'r-new',
-    })
+    // The atomic service call gets the report data and the taskIds
+    // as separate arguments — never merged, never split across two calls.
+    expect(reportServiceMock.createWithTaskLinks).toHaveBeenCalledTimes(1)
+    expect(reportServiceMock.createWithTaskLinks).toHaveBeenCalledWith(
+      {
+        startDate: '2026-07-01',
+        endDate: '2026-07-31',
+        status: 'draft',
+        taskCount: 2,
+        totalHours: 3,
+      },
+      ['t-1', 't-2'],
+    )
     // both reports and tasks invalidated → refetch
     await waitFor(() =>
       expect(reportServiceMock.getAll).toHaveBeenCalledTimes(2),
@@ -169,9 +167,11 @@ describe('useReports hooks (RHK-1..4)', () => {
     expect(sonnerToast.success).toHaveBeenCalledWith('Reporte creado')
   })
 
-  it('RHK-2 Edge: without taskIds, taskService.update is never called', async () => {
+  it('RHK-2 Edge: without taskIds, createWithTaskLinks receives an empty array', async () => {
     reportServiceMock.getAll.mockResolvedValue([])
-    reportServiceMock.create.mockResolvedValue(makeReport({ id: 'r-empty' }))
+    reportServiceMock.createWithTaskLinks.mockResolvedValue(
+      makeReport({ id: 'r-empty' }),
+    )
 
     const { result } = renderHookWithProviders(() => {
       useReports()
@@ -189,14 +189,20 @@ describe('useReports hooks (RHK-1..4)', () => {
       totalHours: 0,
     })
 
-    expect(reportServiceMock.create).toHaveBeenCalledTimes(1)
-    expect(taskServiceMock.update).not.toHaveBeenCalled()
+    expect(reportServiceMock.createWithTaskLinks).toHaveBeenCalledWith(
+      expect.objectContaining({ taskCount: 0 }),
+      [],
+    )
     expect(sonnerToast.success).toHaveBeenCalledWith('Reporte creado')
   })
 
-  it('RHK-2 Error: a rejected task update rejects the mutation, toasts error, and does not invalidate', async () => {
-    reportServiceMock.create.mockResolvedValue(makeReport({ id: 'r-new' }))
-    taskServiceMock.update.mockRejectedValue(new Error('link failed'))
+  it('RHK-2 Error: a rejected atomic create rejects the mutation, toasts error, logs to console, and does not invalidate', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+    reportServiceMock.createWithTaskLinks.mockRejectedValue(
+      new Error('Task(s) not found: t-1'),
+    )
     reportServiceMock.getAll.mockResolvedValue([])
     taskServiceMock.getAll.mockResolvedValue([])
     reportServiceMock.getById.mockResolvedValue(makeReport({ id: 'r-1' }))
@@ -224,12 +230,16 @@ describe('useReports hooks (RHK-1..4)', () => {
         totalHours: 1,
         taskIds: ['t-1'],
       }),
-    ).rejects.toThrow('link failed')
+    ).rejects.toThrow('Task(s) not found: t-1')
 
     expect(sonnerToast.error).toHaveBeenCalledWith(
       'No se pudo crear el reporte',
     )
-    expect(reportServiceMock.create).toHaveBeenCalledTimes(1)
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'No se pudo crear el reporte',
+      expect.any(Error),
+    )
+    expect(reportServiceMock.createWithTaskLinks).toHaveBeenCalledTimes(1)
     // No invalidation: mounted query call counts unchanged inside waitFor
     // settle windows — a spurious refetch would fail these deterministically.
     await waitFor(() =>
@@ -239,6 +249,7 @@ describe('useReports hooks (RHK-1..4)', () => {
     await waitFor(() =>
       expect(reportServiceMock.getById).toHaveBeenCalledTimes(1),
     )
+    consoleErrorSpy.mockRestore()
   })
 
   it('RHK-3 Happy: useUpdateReport invalidates the report and its list; detail-key refetch proven', async () => {
