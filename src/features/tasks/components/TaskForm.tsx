@@ -4,7 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { Plus, Trash2 } from 'lucide-react'
 import { useTask, useCreateTask, useUpdateTask } from '../hooks/useTasks'
-import { taskSchema, type TaskInput } from '../schemas/task.schema'
+import {
+  taskSchema,
+  TITLE_MAX_LENGTH,
+  type TaskInput,
+} from '../schemas/task.schema'
 import { Input } from '../../../shared/components/Input'
 import { Select } from '../../../shared/components/Select'
 import { Button } from '../../../shared/components/Button'
@@ -12,11 +16,9 @@ import Card from '../../../shared/components/Card'
 import type { Note } from '../../../shared/types'
 import { categoryOptions, statusOptions } from '../../../shared/lib/labels'
 
-interface TaskFormProps {
+type TaskFormProps = {
   taskId?: string
 }
-
-const TITLE_MAX = 200
 
 export default function TaskForm({ taskId }: TaskFormProps) {
   const navigate = useNavigate()
@@ -24,10 +26,15 @@ export default function TaskForm({ taskId }: TaskFormProps) {
   const updateMutation = useUpdateTask()
   const { data: existingTask, isLoading: isLoadingTask } = useTask(taskId)
 
+  // Editable draft copy, not a server-state duplication: the user can add/
+  // remove notes before submitting, and only the final list is persisted via
+  // the create/update mutation payload.
   const [notes, setNotes] = useState<Note[]>([])
   const [newNoteText, setNewNoteText] = useState('')
+  const [syncedTaskId, setSyncedTaskId] = useState<string | undefined>()
 
   const isEditing = !!taskId
+  const isMutating = createMutation.isPending || updateMutation.isPending
 
   const {
     register,
@@ -45,7 +52,15 @@ export default function TaskForm({ taskId }: TaskFormProps) {
     },
   })
 
-  // ── Load existing data when editing ─────────────────────────────────
+  // Adjusting state when a prop changes, done during render rather than in
+  // an effect (React's recommended pattern) — avoids the extra render pass
+  // an effect-based setState would cause on every task load/switch.
+  if (existingTask && syncedTaskId !== existingTask.id) {
+    setSyncedTaskId(existingTask.id)
+    setNotes(existingTask.notes)
+  }
+
+  // ── Sync the form library's state (an external system) when editing ──
   useEffect(() => {
     if (existingTask) {
       reset({
@@ -55,7 +70,6 @@ export default function TaskForm({ taskId }: TaskFormProps) {
         status: existingTask.status,
         estimatedDuration: existingTask.estimatedDuration,
       })
-      setNotes(existingTask.notes)
     }
   }, [existingTask, reset])
 
@@ -108,8 +122,6 @@ export default function TaskForm({ taskId }: TaskFormProps) {
     setNotes((prev) => prev.filter((n) => n.id !== noteId))
   }
 
-  const isMutating = createMutation.isPending || updateMutation.isPending
-
   // ── Loading state for edit mode ─────────────────────────────────────
   if (isEditing && isLoadingTask) {
     return (
@@ -144,7 +156,7 @@ export default function TaskForm({ taskId }: TaskFormProps) {
           label="Título"
           placeholder="¿Qué hay que hacer?"
           error={errors.title?.message}
-          maxLength={TITLE_MAX}
+          maxLength={TITLE_MAX_LENGTH}
           {...register('title')}
         />
 
