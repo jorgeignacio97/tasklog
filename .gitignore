@@ -17,6 +17,12 @@ coverage
 # Local tool caches
 .codegraph/
 .atl/.skill-registry.cache.json
+.claude/worktrees/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*
